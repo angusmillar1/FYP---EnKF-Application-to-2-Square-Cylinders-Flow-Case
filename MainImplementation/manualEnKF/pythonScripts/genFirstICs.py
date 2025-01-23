@@ -21,7 +21,7 @@ if num_cells is None: raise ValueError("Invalid meshNum value. Must be 1, 2, or 
 mean_u = 1.0  # Mean velocity magnitude
 fluctuation_u = 0.68  # Velocity fluctuation range
 mean_p = 0  # Mean pressure
-fluctuation_p = 0.2  # Pressure fluctuation range
+fluctuation_p = 0.3  # Pressure fluctuation range
 
 timeStep = "0"  # timeStep to generate field for
 outputPath = "memberRunFiles/"

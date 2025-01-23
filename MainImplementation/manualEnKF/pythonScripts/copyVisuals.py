@@ -5,7 +5,7 @@ import re
 # Directories
 member_run_files = "memberRunFiles"
 # input_directory = "../referenceSolutions/Mesh1RandT500"
-input_directory = "../referenceSolutions/Mesh1DevT500"
+input_directory = "../referenceSolutions/Mesh1DevT1000"
 output_directory = "outputs/visualisations"
 
 # Ensure the output directory exists

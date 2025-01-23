@@ -3,12 +3,18 @@ import sys
 import os
 import pandas as pd
 
+def crop_number(num):
+    if num.is_integer():
+        return int(num)  # Return as an integer if it ends in .0
+    else:
+        return round(num, 1)  # Round to one decimal place otherwise
+
 # Predefined inputs
 num_members = int(sys.argv[1])  # Receive number of members from initialise.py script
 meshNum = int(sys.argv[2])  # Receive mesh choice from initialise.py script
 runtime = float(sys.argv[3])  # Receive the time for the members to initially evolve before informing from initialise.py
 file_write_freq = int(sys.argv[4])  # Receive the frequency at which to write out data
-startTime = float(sys.argv[5])
+startTime = crop_number(float(sys.argv[5]))
 endTime = startTime + runtime
 # num_members = 1
 # meshNum = 1

@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import threading
 import time
 import sys
+# import warnings
+# warnings.filterwarnings("ignore", message="Starting a Matplotlib GUI outside of the main thread")
 
 start_sim_timing = time.time()  # Time runtime 
 
