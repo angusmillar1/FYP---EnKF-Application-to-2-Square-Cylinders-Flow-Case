@@ -10,14 +10,14 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 1  # Set the time for the members to initially evolve before informing
+init_runtime = 0.1  # Set the time for the members to initially evolve before informing
 file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "dev"  # "rand" / "dev". Define initial conditiion to use, either random of developed solution
 exact_soln_path = "../referenceSolutions/Mesh1DevT1000/Square_Cylinders_Non_Linear_Mesh1DvlpdTs10_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 2  # Set the number of ensemble members
-num_loops = 3  # Set the number of EnKF filter-run loops
+num_members = 8  # Set the number of ensemble members
+num_loops = 49  # Set the number of EnKF filter-run loops
 runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
@@ -68,7 +68,7 @@ for loop_num in range(num_loops):
     print("\nRUNNNING OPENFOAM CASES\n")
     subprocess.run([sys.executable, "pythonScripts/runSolverParallelPlot.py", str(start_time+runtime), str(start_time), str(prog_endtime)])  # Run multiple parallel members with progress plot
     print(f"\nPROCESSING FIELDS ({loop_num+1}/{num_loops})\n")
-    members_array = [f"memberRunFiles/member{i}/VTK/member{i}_{int((start_time+runtime)*100)}.vtk" for i in range(1, num_members + 1)] + [exact_soln_path + str(int((start_time+runtime)*100)) + ".vtk"]
+    members_array = [f"memberRunFiles/member{i}/VTK/member{i}_{int(round((start_time+runtime)*100))}.vtk" for i in range(1, num_members + 1)] + [exact_soln_path + str(int(round((start_time+runtime)*100))) + ".vtk"]
     for sample_member in members_array: subprocess.run([sys.executable, "pythonScripts/VTKreadPV.py", sample_member])
     subprocess.run([sys.executable, "pythonScripts/calcError.py", str(start_time+runtime)])
     start_time += runtime

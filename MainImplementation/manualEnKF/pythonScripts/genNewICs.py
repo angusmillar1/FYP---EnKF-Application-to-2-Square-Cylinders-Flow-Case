@@ -4,10 +4,10 @@ import os
 import pandas as pd
 
 def crop_number(num):
-    if num.is_integer():
-        return int(num)  # Return as an integer if it ends in .0
-    else:
-        return round(num, 1)  # Round to one decimal place otherwise
+    num = round(num,1)
+    if num.is_integer(): num = int(num)
+    return num
+
 
 # Predefined inputs
 num_members = int(sys.argv[1])  # Receive number of members from initialise.py script

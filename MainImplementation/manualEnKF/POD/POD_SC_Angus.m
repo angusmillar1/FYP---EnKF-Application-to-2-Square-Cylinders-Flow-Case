@@ -119,7 +119,7 @@ title_fig = ["POD temporal coefficients 1-5","POD temporal coefficients 6-10","P
 for j = 1
     switch j
         case 1
-            i = 1;
+            i = 2:5;
         case 2
             i = 5:8;
         case 3

@@ -73,9 +73,9 @@ def live_plot():
         
         # Plot bars
         ax.bar(bar_positions, bar_heights, tick_label=bar_labels, color="skyblue", alpha=0.8)
-        ax.axhline(prog_endtime, color="green", linestyle="-", linewidth=1.5, label=f"Program Runtime = {prog_endtime}")
-        ax.axhline(target_runtime, color="red", linestyle="--", linewidth=1.5, label=f"End Time = {target_runtime}")
-        ax.axhline(start_time, color="black", linestyle="--", linewidth=1.5, label=f"Start Time = {start_time}")
+        ax.axhline(prog_endtime, color="green", linestyle="-", linewidth=1.5, label=f"Program Runtime = {prog_endtime:.2f}")
+        ax.axhline(target_runtime, color="red", linestyle="--", linewidth=1.5, label=f"End Time = {target_runtime:.2f}")
+        ax.axhline(start_time, color="black", linestyle="--", linewidth=1.5, label=f"Start Time = {start_time:.2f}")
         
         # Add timer on the plot
         ax.text(0.5, 0.9, f"ClockTime (member1): {member1_clock_time:.2f} s", 
