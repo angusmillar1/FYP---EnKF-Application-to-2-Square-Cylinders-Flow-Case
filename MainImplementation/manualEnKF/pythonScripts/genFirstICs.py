@@ -2,6 +2,7 @@ import numpy as np
 import sys
 import re
 import os
+import scipy.io
 
 # Predefined inputs
 num_members = int(sys.argv[1])  # Receive number of members from initialise.py script
@@ -26,6 +27,18 @@ fluctuation_p = 0.3  # Pressure fluctuation range
 timeStep = "0"  # timeStep to generate field for
 outputPath = "memberRunFiles/"
 devInputPath = "exampleOpenfoamFiles/Mesh1DevICs"
+
+if IC_type == "POD":
+    # Read in field statistics data
+    mat = scipy.io.loadmat('POD/POD_Initialisation_data.mat')  # Load MATLAB data
+
+    # Unpack variables from the .mat file
+    Y_mean   = mat['Y_mean']      # Mean flow (size: [N, 1] or [N,])
+    a_mean   = mat['a_mean']      # Mean of time coeffs (size: [M, 1] or [1, M])
+    a_stddev = mat['a_stddev']    # Std dev of time coeffs (size: [M, 1] or [1, M])
+    phi      = mat['phi_crop']    # Truncated mode matrix (size: [N, M])
+    N, M = phi.shape  # N = number of spatial points/DOFs (rows of phi), M = number of retained modes (columns of phi)
+            
 
 
 def generate_random_field(num_cells, mean, fluctuation):
@@ -385,6 +398,14 @@ def main():
             # Apply random fluctuation
             u_vectors = add_random_fluctuation(u_inp, fluctuation_u)
             p_values = add_random_fluctuation(p_inp, fluctuation_p)
+        elif IC_type == "POD":
+            # Generate randomised fields
+            a_rand = a_mean + a_stddev * np.random.randn(M, 1)
+            Y_rand = Y_mean + phi @ a_rand
+            u_vals = Y_rand[:num_cells, 0]                  # Shape: (num_cells,)
+            v_vals = Y_rand[num_cells:, 0]                  # Shape: (num_cells,)
+            u_vectors = np.column_stack((u_vals, v_vals))   # Shape: (num_cells, 2)
+            p_values = np.zeros(num_cells)             # Just use zeros for now, should work out
         else:
             raise ValueError("Invalid initial condition type selected")
         

@@ -12,12 +12,12 @@ start_whole_timing = time.time()  # Time runtime
 mesh_num = 1  # Select the Mesh to use
 init_runtime = 0.1  # Set the time for the members to initially evolve before informing
 file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
-IC_type = "dev"  # "rand" / "dev". Define initial conditiion to use, either random of developed solution
+IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, either random of developed solution
 exact_soln_path = "../referenceSolutions/Mesh1DevT1000/Square_Cylinders_Non_Linear_Mesh1DvlpdTs10_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
 num_members = 8  # Set the number of ensemble members
-num_loops = 49  # Set the number of EnKF filter-run loops
+num_loops = 99  # Set the number of EnKF filter-run loops
 runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
