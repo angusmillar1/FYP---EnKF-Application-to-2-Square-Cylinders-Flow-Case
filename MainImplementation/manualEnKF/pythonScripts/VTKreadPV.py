@@ -46,7 +46,7 @@ full_cell_centers = mesh.cell_centers().points
 velocity_data = mesh.cell_data["U"]  # Velocity data (e.g., "U")
 Ux_data = velocity_data[:, 0]  # X-component of velocity
 Uy_data = velocity_data[:, 1]  # Y-component of velocity
-P_data = mesh.cell_data["p"]  # Pressure data
+# P_data = mesh.cell_data["p"]  # Pressure data
 full_IDs = mesh.cell_data["cellID"]  # Cell IDs
 
 if timestep != 0:
@@ -55,7 +55,7 @@ if timestep != 0:
     reduced_velocity_data = velocity_data[cell_ids]
     reduced_Ux_data = reduced_velocity_data[:, 0]
     reduced_Uy_data = reduced_velocity_data[:, 1]
-    reduced_P_data = P_data[cell_ids]
+    # reduced_P_data = P_data[cell_ids]
 
 # Plotting the data
 if display_output:
@@ -105,7 +105,7 @@ if timestep != 0:
     export_data = {
         "Ux": reduced_Ux_data,
         "Uy": reduced_Uy_data,
-        "p": reduced_P_data,
+        # "p": reduced_P_data,
         "CellID": cell_ids
     }
     df = pd.DataFrame(export_data)
@@ -120,7 +120,7 @@ if timestep != 0:
 full_export_data = {
     "Ux": Ux_data,
     "Uy": Uy_data,
-    "p": P_data,
+    # "p": P_data,
     "CellID": full_IDs
 }
 df = pd.DataFrame(full_export_data)

@@ -1,6 +1,7 @@
 import vtk
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import sys
 import os
 import time
@@ -176,6 +177,12 @@ if display_reduced_mesh:
 
     # Plot the extracted points
     ax.scatter(extracted_points[:, 0], extracted_points[:, 1], color="blue", label="Mapped Centroids", s=10)
+
+    # Draw squares for context
+    square1 = patches.Rectangle((-0.5, 0.5), 1, 1, linewidth=1, edgecolor="black", facecolor="black")
+    square2 = patches.Rectangle((-0.5, -1.5), 1, 1, linewidth=1, edgecolor="black", facecolor="black")
+    ax.add_patch(square1)
+    ax.add_patch(square2)
 
     # Add labels, legend, and grid
     ax.set_title("Reduced Resolution Mesh")

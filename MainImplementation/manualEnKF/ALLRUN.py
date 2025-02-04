@@ -16,8 +16,8 @@ IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, eit
 exact_soln_path = "../referenceSolutions/Mesh1DevT1000/Square_Cylinders_Non_Linear_Mesh1DvlpdTs10_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 8  # Set the number of ensemble members
-num_loops = 99  # Set the number of EnKF filter-run loops
+num_members = 2  # Set the number of ensemble members
+num_loops = 1  # Set the number of EnKF filter-run loops
 runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs

@@ -227,6 +227,64 @@ boundaryField
 
 // ************************************************************************* //
 """)
+
+def write_zero_p_file(filename, timeStep):
+    """
+    Write the pressure field (p) file in the specified OpenFOAM format.
+    """
+    with open(filename, 'w') as f:
+        f.write(f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       volScalarField;
+    location    "{timeStep}";
+    object      p;
+}}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{{
+    INLET
+    {{
+        type            zeroGradient;
+    }}
+    OUTLET
+    {{
+        type            fixedValue;
+        value           uniform 0;
+    }}
+    SYMMETRY
+    {{
+        type            symmetry;
+    }}
+    SQUARE_UP
+    {{
+        type            zeroGradient;
+    }}
+    SQUARE_DOWN
+    {{
+        type            zeroGradient;
+    }}
+    frontAndBackPlanes
+    {{
+        type            empty;
+    }}
+}}
+
+
+// ************************************************************************* //
+""")
         
 def write_controlDict_file(filename, init_runtime, file_write_freq):
     with open(filename, 'w') as f:
@@ -413,7 +471,8 @@ def main():
         outputDir = outputPath + "member" + str(memIndex)
         print(outputDir)
         write_U_file(outputDir+"/0/U", u_vectors, num_cells, timeStep)
-        write_p_file(outputDir+"/0/p", p_values, num_cells, timeStep)
+        # write_p_file(outputDir+"/0/p", p_values, num_cells, timeStep)
+        write_zero_p_file(outputDir+"/0/p", timeStep)
         write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq)
         print("Files 'U', 'p' and 'controlDict' have been generated.")
 

@@ -12,13 +12,14 @@ try:
     data = pd.read_csv(file_path)
 
     # Check if the required columns exist
-    required_columns = ["T", "MSE_u", "MSE_v", "MSE_p", "MSE_tot"]
+    # required_columns = ["T", "MSE_u", "MSE_v", "MSE_p", "MSE_tot"]
+    required_columns = ["T", "MSE_u", "MSE_v", "MSE_tot"]
     if all(col in data.columns for col in required_columns):
         # Plot the data
         plt.figure(figsize=(10,6))
         plt.plot(data["T"], data["MSE_u"], label="MSE_u", marker='o')
         plt.plot(data["T"], data["MSE_v"], label="MSE_v", marker='s')
-        plt.plot(data["T"], data["MSE_p"], label="MSE_p", marker='^')
+        # plt.plot(data["T"], data["MSE_p"], label="MSE_p", marker='^')
         plt.plot(data["T"], data["MSE_tot"], label="MSE_tot", marker='d')
 
         # Add plot labels and legend
