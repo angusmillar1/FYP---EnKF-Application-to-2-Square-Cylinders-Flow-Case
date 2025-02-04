@@ -1,3 +1,7 @@
+import warnings
+warnings.filterwarnings("ignore", message="Starting a Matplotlib GUI outside of the main thread will likely fail.")
+
+
 import os
 import re
 import subprocess

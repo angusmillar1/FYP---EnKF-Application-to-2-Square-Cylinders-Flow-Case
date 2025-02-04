@@ -30,7 +30,7 @@ devInputPath = "exampleOpenfoamFiles/Mesh1DevICs"
 
 if IC_type == "POD":
     # Read in field statistics data
-    mat = scipy.io.loadmat('POD/POD_Initialisation_data.mat')  # Load MATLAB data
+    mat = scipy.io.loadmat('inputs/POD_Initialisation_data.mat')  # Load MATLAB data
 
     # Unpack variables from the .mat file
     Y_mean   = mat['Y_mean']      # Mean flow (size: [N, 1] or [N,])

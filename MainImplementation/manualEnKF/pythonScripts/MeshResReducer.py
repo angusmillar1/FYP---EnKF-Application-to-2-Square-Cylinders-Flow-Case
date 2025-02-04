@@ -5,6 +5,7 @@ import matplotlib.patches as patches
 import sys
 import os
 import time
+import pandas as pd
 
 # ----------------------- USER DEFINED INPUTS -------------------------------
 # Define the domain size
@@ -18,18 +19,20 @@ probe_type = "specified"  # "uniform" / "specified" / "combined"
 reduction_percentage = 0.1  # Reduce to x% of the original resolution (=1 => 1%)
 
 # Specified distribution controls
-custom_coordinates = [
-    [2.0, 1.0, 0.0],   
-    [4.0, 1.0, 0.0],  
-    [6.0, 1.0, 0.0],
-    [8.0, 1.0, 0.0],
-    [10.0, 1.0, 0.0],
-    [2.0, -1.0, 0.0],   
-    [4.0, -1.0, 0.0],  
-    [6.0, -1.0, 0.0],
-    [8.0, -1.0, 0.0],
-    [10.0, -1.0, 0.0]
-]
+# custom_coordinates = [
+#     [2.0, 1.0, 0.0],   
+#     [4.0, 1.0, 0.0],  
+#     [6.0, 1.0, 0.0],
+#     [8.0, 1.0, 0.0],
+#     [10.0, 1.0, 0.0],
+#     [2.0, -1.0, 0.0],   
+#     [4.0, -1.0, 0.0],  
+#     [6.0, -1.0, 0.0],
+#     [8.0, -1.0, 0.0],
+#     [10.0, -1.0, 0.0]
+# ]
+df = pd.read_csv("inputs/measurement_coords.csv")
+custom_coordinates = df[['x', 'y', 'z']].values.tolist()
 
 # Specify whether to plot resolution of reduced mesh or not
 display_reduced_mesh = 1  # 1 / 0
@@ -159,7 +162,7 @@ np.savetxt(output_filename, cell_ids, delimiter=",", fmt="%d")
 
 # Write sample points locations (reduced_grid) to a CSV file
 csv_output_filename = "outputs/sample_points_locations.csv"
-np.savetxt(csv_output_filename, reduced_grid, delimiter=",", fmt="%.2f")
+np.savetxt(csv_output_filename, extracted_points, delimiter=",", fmt="%.5f", header="x,y,z", comments="")
 print(f"Reduced grid points have been written to {csv_output_filename}.")
 
 
@@ -190,6 +193,7 @@ if display_reduced_mesh:
     ax.set_ylabel("Y")
     ax.legend()
     ax.grid()
+    ax.set_aspect('equal')
 
     # Save the plot
     plt.savefig("outputs/reduced_mesh_vis.png", dpi=300)

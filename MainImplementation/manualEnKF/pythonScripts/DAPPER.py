@@ -3,6 +3,16 @@ import numpy as np
 import os
 import statistics as st
 import re
+# import sys
+# import csv
+
+# def crop_number(num):
+#     num = round(num,1)
+#     if num.is_integer(): num = int(num)
+#     return num
+
+# # Take start time for error tracking write
+# timestep = crop_number(float(sys.argv[5]))
 
 # Directory containing the .csv files
 redu_directory = "EnKFMeshData/reducedMeshData"
@@ -53,6 +63,12 @@ for i in range(Np):  # Loop through for each sample point
     ens_u_mean = st.mean(ens_u[i,:])
     ens_v_mean = st.mean(ens_v[i,:])
     # ens_p_mean = st.mean(ens_p[i,:])
+
+    # Compute the ensemble extremes for error tracking
+    # ens_u_max = st.max(ens_u[i,:])
+    # ens_v_max = st.max(ens_v[i,:])
+    # ens_u_min = st.min(ens_u[i,:])
+    # ens_v_min = st.min(ens_v[i,:])
 
     # Compute the sample covariance between ensemble predictions and observations
     cov_u = (1 / (Ne - 1)) * np.sum((ens_u - ens_u_mean) * (ref_u[i] - ens_u_mean))
@@ -130,3 +146,23 @@ for filename in sorted(os.listdir(full_directory)):
         df.to_csv(output_file, index=False, float_format="%.6f")
 
         # print(f"Filtered data written for member " + str(mem_num))
+
+
+# # WRITE DATA FOR MEASUREMENT POINT ERROR TRACKING - EDIT FROM HERE DOWN
+
+# # Write results to CSV file
+# point_data_output_file = "outputs/measurment_points_track.csv"
+
+# # Create the directory and file with headings if needed
+# if not os.path.exists(point_data_output_file):
+#     os.makedirs(os.path.dirname(point_data_output_file), exist_ok=True)
+#     with open(point_data_output_file, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(["T", "ens_u_max", "ens_u_min", "ens_u_mean", "ens_v_max", "ens_v_min", "ens_v_mean","ref_u","ref_v"])
+#         print(f"File '{point_data_output_file}' created with headings.")
+
+# # Append the calculated norms to the CSV file
+# with open(point_data_output_file, mode='a', newline='') as file:
+#     writer = csv.writer(file)
+#     writer.writerow([timestep, ens_u_max, ens_u_min, ens_u_mean, ens_v_max, ens_v_min, ens_v_mean, ref_u, ref_v])
+#     print(f"Values [T, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot] appended to error_write.csv")

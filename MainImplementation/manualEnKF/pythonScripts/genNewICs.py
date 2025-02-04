@@ -216,9 +216,8 @@ boundaryField
 // ************************************************************************* //
 """)
         
-def write_controlDict_file(filename, file_write_freq, startTime, endTime):
-    with open(filename, 'w') as f:
-        f.write(f"""/*--------------------------------*- C++ -*----------------------------------*\\
+def write_controlDict_file(filename, file_write_freq, startTime, endTime, probe_points):
+    header = f"""/*--------------------------------*- C++ -*----------------------------------*\\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
@@ -266,6 +265,26 @@ runTimeModifiable true;
 
 functions
 {{
+velocityProbes
+{{
+    type            probes;
+    functionObjectLibs ("libsampling.so");
+    outputControl   timeStep;       // Write every timestep
+    outputInterval  1;
+    probeLocations
+    (
+"""
+
+    probe_lines = ""
+    for point in probe_points:
+        probe_lines += f"        ({point[0]:.3f} {point[1]:.3f} 0.000)\n"  # Limit to 6 decimal places   
+
+    footer = f"""        );
+    fields
+    (
+        U    // or (U p) if you need both velocity and pressure
+    );
+}}
 Square_up
 {{
     type        forceCoeffs;
@@ -361,10 +380,17 @@ Square_down
  }}
 }}
 
+
 // ************************************************************************* //
-""")
+"""
+    full_content = header + probe_lines + footer
+    with open(filename, 'w') as f:
+        f.write(full_content)
 
 def main():
+    # Get measurement point positions for controlDict probes
+    df = pd.read_csv("outputs/sample_points_locations.csv")
+    probe_points = df[['x', 'y', 'z']].values.tolist()
 
     for memIndex in range(1, num_members+1):
 
@@ -385,7 +411,7 @@ def main():
         write_U_file(os.path.join(outputDir,str(startTime),"U"), u_vectors, num_cells, startTime)
         # write_p_file(os.path.join(outputDir,str(startTime),"p"), p_values, num_cells, startTime)
         write_zero_p_file(os.path.join(outputDir,str(startTime),"p"), startTime)
-        write_controlDict_file(outputDir+"/system/controlDict", file_write_freq, startTime, endTime)
+        write_controlDict_file(outputDir+"/system/controlDict", file_write_freq, startTime, endTime, probe_points)
         # print("Files 'U', 'p' and 'controlDict' have been generated.")
 
 if __name__ == "__main__":

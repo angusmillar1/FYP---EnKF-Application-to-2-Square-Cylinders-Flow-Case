@@ -10,15 +10,15 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 0.1  # Set the time for the members to initially evolve before informing
+init_runtime = 0.2  # Set the time for the members to initially evolve before informing
 file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, either random of developed solution
 exact_soln_path = "../referenceSolutions/Mesh1DevT1000/Square_Cylinders_Non_Linear_Mesh1DvlpdTs10_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 2  # Set the number of ensemble members
-num_loops = 1  # Set the number of EnKF filter-run loops
-runtime = 0.1  # Set the runtime between each EnKF filtering
+num_members = 5  # Set the number of ensemble members
+num_loops = 4  # Set the number of EnKF filter-run loops
+runtime = 0.2  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
 prog_endtime = init_runtime + num_loops * runtime
@@ -42,12 +42,9 @@ print("\nRUNNING INTITIAL EVOLUTION OF MEMBERS\n")
 # subprocess.run([sys.executable, "pythonScripts/runSolverParallelPlot.py"])  # Run multiple ensemble members in parallel with one core each
 subprocess.run([sys.executable, "pythonScripts/runSolverParallelPlot.py", str(init_runtime), str(0), str(prog_endtime)])  # Run multiple parallel members with progress plot
 
-# Generate indices of cells for reduced resolution mesh
-ref_timestep = int(init_runtime * 100)
-subprocess.run([sys.executable, "pythonScripts/MeshResReducer.py", f"memberRunFiles/member1/VTK/member1_{ref_timestep}.vtk"])
-
 # Reduce the resolution of the member results, as well as the exact solution. Write these to a directory XXXXXXXXXX in csv format
 print("\nPROCESSING FIELDS\n")
+ref_timestep = int(init_runtime*100)
 members_array = [f"memberRunFiles/member{i}/VTK/member{i}_{ref_timestep}.vtk" for i in range(1, num_members + 1)] + [exact_soln_path + str(ref_timestep) + ".vtk"]
 for sample_member in members_array: subprocess.run([sys.executable, "pythonScripts/VTKreadPV.py", sample_member])
 
@@ -62,7 +59,7 @@ start_time = init_runtime
 for loop_num in range(num_loops):
     print(f"\nDAPPER LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
-    subprocess.run([sys.executable, "pythonScripts/DAPPER.py"])
+    subprocess.run([sys.executable, "pythonScripts/DAPPER.py", str(start_time)])
     print("\nWRITING NEW SOURCE FILES\n")
     subprocess.run([sys.executable, "pythonScripts/genNewICs.py", str(num_members), str(mesh_num), str(runtime), str(file_write_freq), str(start_time)])
     print("\nRUNNNING OPENFOAM CASES\n")

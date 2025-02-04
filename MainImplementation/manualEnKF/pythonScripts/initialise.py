@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import re
+import pandas as pd
 
 # # Set the number of members
 # num_members = 2  # Change this number as needed
@@ -102,5 +103,190 @@ for root, dirs, files in os.walk(member_directory):
                 print(f"Command failed in directory {subdirectory_path}: {e}")
 
 print("Initial conditions converted to readable output")
+
+# CREATE VELOCITY PROBES AT MEASUREMENT POINTS
+
+# Generate indices of cells for reduced resolution mesh
+subprocess.run([sys.executable, "pythonScripts/MeshResReducer.py", "memberRunFiles/member1/VTK/member1_0.vtk"])
+
+# Rewrite controlDict files with probe points added
+df = pd.read_csv("outputs/sample_points_locations.csv")
+probe_points = df[['x', 'y', 'z']].values.tolist()
+
+def write_controlDict_file(filename, init_runtime, file_write_freq, probe_points):
+    header = f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     pimpleFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         {init_runtime};
+
+deltaT          0.01; 
+
+writeControl    timeStep;
+
+writeInterval   {file_write_freq};
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+functions
+{{
+velocityProbes
+{{
+    type            probes;
+    functionObjectLibs ("libsampling.so");
+    outputControl   timeStep;       // Write every timestep
+    outputInterval  1;
+    probeLocations
+    (
+"""
+
+    probe_lines = ""
+    for point in probe_points:
+        probe_lines += f"        ({point[0]:.3f} {point[1]:.3f} 0.000)\n"  # Limit to 6 decimal places   
+
+    footer = f"""        );
+    fields
+    (
+        U    // or (U p) if you need both velocity and pressure
+    );
+}}
+Square_up
+{{
+    type        forceCoeffs;
+    libs        ("libforces.so");
+    log         no;
+    patches     (SQUARE_UP);
+    origin      (0 0 0);
+    CofR                (0 0 0); // Centre of rotation
+    dragDir             (1 0 0);
+    liftDir             (0 1 0);    
+    pitchAxis   (0 0 1);
+    magUInf     1;
+    rhoInf      1;
+    rho         rhoInf;
+    lRef        1;
+    Aref        1;
+}}
+Square_down
+{{
+    type        forceCoeffs;
+    libs        ("libforces.so");
+    log         no;
+    patches     (SQUARE_DOWN);
+    origin      (0 0 0);
+    CofR                (0 0 0); // Centre of rotation
+    dragDir             (1 0 0);
+    liftDir             (0 1 0);    
+    pitchAxis   (0 0 1);
+    magUInf     1;
+    rhoInf      1;
+    rho         rhoInf;
+    lRef        1;
+    Aref        1;
+}}
+     fieldAverage1
+ {{
+    // Mandatory entries (unmodifiable)
+    type            fieldAverage;
+    libs            ("libfieldFunctionObjects.so");
+
+    // Mandatory entries (runtime modifiable)
+    fields
+    (
+        U
+        {{
+            mean        yes;
+            prime2Mean  no;
+            base        time;
+            windowType   exact;
+            window       10000;
+            windowName   <name>;
+            allowRestart false;
+        }}
+        enstrophy
+        {{
+            mean        no;
+            prime2Mean  no;
+            base        time;
+            windowType   exact;
+            window       10000;
+            windowName   <name>;
+            allowRestart false;
+        }}
+        vorticity
+        {{
+            mean        no;
+            prime2Mean  no;
+            base        time;
+            windowType   exact;
+            window       10000;
+            windowName   <name>;
+            allowRestart false;
+        }}        
+               
+    );
+
+    // Optional entries (runtime modifiable)
+    restartOnRestart    false;
+    restartOnOutput     false;
+    periodicRestart     false;
+    restartPeriod       0.002;
+
+    // Optional (inherited) entries
+    region          region0;
+    enabled         true;
+    log             true;
+    timeStart       50;
+    timeEnd         10000;
+    executeControl  timeStep;
+    executeInterval 1;
+    writeControl    timeStep;
+    writeInterval   1000;
+ }}
+}}
+
+
+// ************************************************************************* //
+"""
+    full_content = header + probe_lines + footer
+    with open(filename, 'w') as f:
+        f.write(full_content)
+
+for memIndex in range(1, num_members+1):
+    outputDir = "memberRunFiles/member" + str(memIndex)
+    write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq, probe_points)
+
 
 
