@@ -414,5 +414,8 @@ def main():
         write_controlDict_file(outputDir+"/system/controlDict", file_write_freq, startTime, endTime, probe_points)
         # print("Files 'U', 'p' and 'controlDict' have been generated.")
 
+    # Also do reference solution (only controlDict, leave U and p)
+    write_controlDict_file("memberRunFiles/refSoln/system/controlDict", file_write_freq, startTime, endTime, probe_points)
+
 if __name__ == "__main__":
     main()

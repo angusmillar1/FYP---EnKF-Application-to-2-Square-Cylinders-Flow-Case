@@ -13,7 +13,7 @@ display_output = 0  # 1 / 0
 # Inputs
 # vtk_file_path = "../memberRunFiles/member1/VTK/member1_0.vtk"  # Path to the VTK file
 vtk_file_path = sys.argv[1]
-cell_ids_file = "reduced_mesh_cell_ids.csv"  # Path to the cell IDs file
+cell_ids_file = "outputs/reduced_mesh_cell_ids.csv"  # Path to the cell IDs file
 
 # Check if it's the initial conditions or not
 last_underscore_index = vtk_file_path.rfind('_')  # Finds the last underscore

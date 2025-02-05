@@ -10,15 +10,15 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 0.2  # Set the time for the members to initially evolve before informing
+init_runtime = 0.1  # Set the time for the members to initially evolve before informing
 file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, either random of developed solution
-exact_soln_path = "../referenceSolutions/Mesh1DevT1000/Square_Cylinders_Non_Linear_Mesh1DvlpdTs10_"  # Make sure this matches IC and mesh type choice
+exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 5  # Set the number of ensemble members
-num_loops = 4  # Set the number of EnKF filter-run loops
-runtime = 0.2  # Set the runtime between each EnKF filtering
+num_members = 8  # Set the number of ensemble members
+num_loops = 19  # Set the number of EnKF filter-run loops
+runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
 prog_endtime = init_runtime + num_loops * runtime
@@ -51,13 +51,13 @@ for sample_member in members_array: subprocess.run([sys.executable, "pythonScrip
 # Calculate errors
 subprocess.run([sys.executable, "pythonScripts/calcError.py", str(init_runtime)])
 
-# Start Dapper Loop
+# Start EnKF Loop
 print("------------------------------------------------")
 print("\nSTARTING EnKF LOOP\n")
 print("------------------------------------------------")
 start_time = init_runtime
 for loop_num in range(num_loops):
-    print(f"\nDAPPER LOOP {loop_num+1}/{num_loops}\n")
+    print(f"\EnKF LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
     subprocess.run([sys.executable, "pythonScripts/DAPPER.py", str(start_time)])
     print("\nWRITING NEW SOURCE FILES\n")
@@ -70,7 +70,7 @@ for loop_num in range(num_loops):
     subprocess.run([sys.executable, "pythonScripts/calcError.py", str(start_time+runtime)])
     start_time += runtime
     end_daploop_timing = time.time()
-    print(f"\nDAPPER LOOP {loop_num+1}/{num_loops} FINISHED\nDapper loop {loop_num+1} elapsed time: {end_daploop_timing - start_daploop_timing:.2f} seconds\n")
+    print(f"\EnKF LOOP {loop_num+1}/{num_loops} FINISHED\EnKF loop {loop_num+1} elapsed time: {end_daploop_timing - start_daploop_timing:.2f} seconds\n")
 
 print("\nSTARTING FINAL PROCESSING\n")
 
@@ -78,7 +78,7 @@ print("\nSTARTING FINAL PROCESSING\n")
 subprocess.run([sys.executable, "pythonScripts/tidy.py"])
 
 # Plot error metrics through time
-subprocess.run([sys.executable, "pythonScripts/errorPlot.py"])
+subprocess.run([sys.executable, "pythonScripts/errorPlot.py", str(num_members)])
 
 # Copy all .vtk files to outputs directory to allow for easily visualising in paraview
 # subprocess.run([sys.executable, "pythonScripts/copyVisuals.py"])

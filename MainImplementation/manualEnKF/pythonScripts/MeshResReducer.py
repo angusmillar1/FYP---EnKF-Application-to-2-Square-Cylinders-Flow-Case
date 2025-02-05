@@ -59,7 +59,7 @@ def create_vtk_functions(vtk_file_path):
 # Load the mesh
 # vtk_file_path = "../memberRunFiles/member1/VTK/member1_0.vtk"
 vtk_file_path = sys.argv[1]
-output_filename = "reduced_mesh_cell_ids.csv"
+output_filename = "outputs/reduced_mesh_cell_ids.csv"
 
 # Clear any previous runs to rewrite
 if os.path.exists(output_filename):

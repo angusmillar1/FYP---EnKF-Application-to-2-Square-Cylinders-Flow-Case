@@ -3,6 +3,8 @@ import sys
 import re
 import os
 import scipy.io
+import random
+import shutil
 
 # Predefined inputs
 num_members = int(sys.argv[1])  # Receive number of members from initialise.py script
@@ -434,6 +436,20 @@ Square_down
 // ************************************************************************* //
 """)
 
+def copy_reference_files():
+    # Set path to find reference files
+    source_dir = "exampleOpenfoamFiles/Mesh1DevICs"
+    ref_destination_dir = "memberRunFiles/refSoln/0/"
+
+    # Copy pressure file
+    shutil.copy(source_dir+"/p", ref_destination_dir)
+
+    # Select and copy a random initial scene file
+    file_path = os.path.join(source_dir, "U", "U"+str(random.randint(0,100)))
+    shutil.copy(file_path, ref_destination_dir+"U")
+
+
+
 def main():
 
     for memIndex in range(1, num_members+1):
@@ -475,6 +491,10 @@ def main():
         write_zero_p_file(outputDir+"/0/p", timeStep)
         write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq)
         print("Files 'U', 'p' and 'controlDict' have been generated.")
+
+    # Also do reference solution
+    copy_reference_files()
+    write_controlDict_file(outputPath+"refSoln/system/controlDict", init_runtime, file_write_freq)
 
 if __name__ == "__main__":
     main()

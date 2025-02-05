@@ -62,6 +62,7 @@ remove_files_in_directory("outputs")
 remove_files_in_directory("outputs/visualisations")
 print("Cleared all contents in outputs")
 
+
 # Loop to copy and rename directories for each member
 for i in range(1, num_members + 1):
     member_dir_name = f"member{i}"
@@ -70,6 +71,11 @@ for i in range(1, num_members + 1):
     # Copy the source directory to the destination
     shutil.copytree(source_dir, destination_dir)
     print(f"Copied {source_dir} to {destination_dir}")
+
+# Copy reference solution run files
+ref_destination_dir = os.path.join(destination_parent_dir, "refSoln")
+shutil.copytree(source_dir, ref_destination_dir)
+print(f"Copied {source_dir} to {ref_destination_dir}")
 
 print("All member directories created successfully!")
 
@@ -88,9 +94,10 @@ pattern = re.compile(r"^member\d+$")
 for root, dirs, files in os.walk(member_directory):
     for directory in dirs:
         # Check if the directory name matches the pattern
-        if pattern.match(directory):
+        if pattern.match(directory) or directory=="refSoln":
             # Construct the full path to the subdirectory
             subdirectory_path = os.path.join(root, directory)
+            print(subdirectory_path)
 
             # Change to the subdirectory
             print(f"Processing directory: {subdirectory_path}")
@@ -287,6 +294,10 @@ Square_down
 for memIndex in range(1, num_members+1):
     outputDir = "memberRunFiles/member" + str(memIndex)
     write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq, probe_points)
+
+outputDir = "memberRunFiles/refSoln"
+write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq, probe_points)
+
 
 
 
