@@ -16,8 +16,8 @@ IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, eit
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 8  # Set the number of ensemble members
-num_loops = 19  # Set the number of EnKF filter-run loops
+num_members = 20  # Set the number of ensemble members
+num_loops = 299  # Set the number of EnKF filter-run loops
 runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
@@ -57,7 +57,7 @@ print("\nSTARTING EnKF LOOP\n")
 print("------------------------------------------------")
 start_time = init_runtime
 for loop_num in range(num_loops):
-    print(f"\EnKF LOOP {loop_num+1}/{num_loops}\n")
+    print(f"\nEnKF LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
     subprocess.run([sys.executable, "pythonScripts/DAPPER.py", str(start_time)])
     print("\nWRITING NEW SOURCE FILES\n")
@@ -70,7 +70,7 @@ for loop_num in range(num_loops):
     subprocess.run([sys.executable, "pythonScripts/calcError.py", str(start_time+runtime)])
     start_time += runtime
     end_daploop_timing = time.time()
-    print(f"\EnKF LOOP {loop_num+1}/{num_loops} FINISHED\EnKF loop {loop_num+1} elapsed time: {end_daploop_timing - start_daploop_timing:.2f} seconds\n")
+    print(f"\nEnKF LOOP {loop_num+1}/{num_loops} FINISHED\nEnKF loop {loop_num+1} elapsed time: {end_daploop_timing - start_daploop_timing:.2f} seconds\n")
 
 print("\nSTARTING FINAL PROCESSING\n")
 
