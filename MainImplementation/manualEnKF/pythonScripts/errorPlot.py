@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker 
 import time as timepkg
 import os
 import re
@@ -8,14 +9,15 @@ import sys
 
 # CHOOSE WHAT TO PLOT
 
-wholeFieldOn = 0
+wholeFieldOn = 1
 probePlotOn = 1
-printProgress = 1
+plotAssimInt = 0
+printProgress = 0
 
-# num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
-num_members = 20    # Manually set number of members for spread plot
-probeNum = [2,8,14] # Choose probe points to plot for
-timeWindow = [0,5]  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
+# num_members = 20    # Manually set number of members for spread plot
+probeNum = [1] # Choose probe points to plot for
+timeWindow = []  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 # File path
 input_path = "outputs/"
@@ -27,10 +29,10 @@ output_path = "outputs/errorPlots/"
 probe_coords_file = input_path+"sample_points_locations.csv"
 df = pd.read_csv(probe_coords_file)
 if 'p' not in df.columns:
-    df.insert(0, 'p', range(1, len(df) + 1))    # Insert a new column 'p' with index starting from 1
+    df.insert(0, 'p', range(0, len(df)))    # Insert a new column 'p' with index starting from 1
     df.to_csv(probe_coords_file, index=False)
     if printProgress: print(f"Modified file saved as {probe_coords_file}")
-if printProgress: print(f"{probe_coords_file} already contains point indices")
+else: printProgress: print(f"{probe_coords_file} already contains point indices")
 
 
 
@@ -72,7 +74,8 @@ if wholeFieldOn:
             plt.tight_layout()
 
             # Save the L1 plot
-            output_plot_path_L1 = output_path+"L1_plot.png"
+            if not timeWindow: output_plot_path_L1 = output_path+"L1_plot.png"
+            else: output_plot_path_L1 = output_path+f"L1_plot_windowed_{t_min}_{t_max}.png"
             plt.savefig(output_plot_path_L1, dpi=300)
             print(f"L1 plot saved as '{output_plot_path_L1}'")
 
@@ -103,7 +106,8 @@ if wholeFieldOn:
             plt.tight_layout()
 
             # Save the L2 plot
-            output_plot_path_L2 = output_path+"L2_plot.png"
+            if not timeWindow: output_plot_path_L2 = output_path+"L2_plot.png"
+            else: output_plot_path_L2 = output_path+f"L2_plot_windowed_{t_min}_{t_max}.png"
             plt.savefig(output_plot_path_L2, dpi=300)
             print(f"L2 plot saved as '{output_plot_path_L2}'")
 
@@ -286,8 +290,16 @@ if probePlotOn:
         plt.title(f"Ensemble u Velocity at Probe ({x_p:.2f}, {y_p:.2f}, {z_p:.2f})")
         plt.grid(True)
         plt.legend(loc="best")
+
+        if plotAssimInt:
+            # Use MultipleLocator for vertical lines every 0.1 time units
+            ax = plt.gca()  # Get current axes
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+            ax.grid(which='major', axis='x', linestyle='--', color='black')    
+
         plt.tight_layout()
-        plt.savefig(output_path+f"U_probe_series_point{p}.png", dpi=300)
+        if not timeWindow: plt.savefig(output_path+f"U_probe_series_point{p}.png", dpi=300)
+        else: plt.savefig(output_path+f"U_probe_series_point{p}_windowed_{t_min}_{t_max}.png", dpi=300)
 
         # Show for a short period
         plt.show(block=False)
@@ -308,8 +320,16 @@ if probePlotOn:
         plt.title(f"Ensemble v Velocity at Probe ({x_p:.2f}, {y_p:.2f}, {z_p:.2f})")
         plt.grid(True)
         plt.legend(loc="best")
+
+        if plotAssimInt:
+            # Use MultipleLocator for vertical lines every 0.1 time units
+            ax = plt.gca()  # Get current axes
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+            ax.grid(which='major', axis='x', linestyle='--', color='black')    
+
         plt.tight_layout()
-        plt.savefig(output_path+f"V_probe_series_point{p}.png", dpi=300)
+        if not timeWindow: plt.savefig(output_path+f"V_probe_series_point{p}.png", dpi=300)
+        else: plt.savefig(output_path+f"V_probe_series_point{p}_windowed_{t_min}_{t_max}.png", dpi=300)
 
         # Show for a short period
         plt.show(block=False)
