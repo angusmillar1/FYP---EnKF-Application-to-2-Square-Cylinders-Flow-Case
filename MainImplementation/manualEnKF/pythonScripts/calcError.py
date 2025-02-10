@@ -63,6 +63,20 @@ L2_tot = np.sqrt(np.sum(err_u ** 2 + err_v ** 2))
 # Alternatively, if you prefer using the individual L2 values:
 # L2_tot = np.sqrt(L2_u**2 + L2_v**2)
 
+# Normalise norms by norm of reference solution
+L1_ref_u = (np.sum(np.abs(ref_u)))
+L1_ref_v = (np.sum(np.abs(ref_v)))
+L2_ref_u = (np.sqrt(np.sum(ref_u ** 2)))
+L2_ref_v = (np.sqrt(np.sum(ref_v ** 2)))
+
+L1_u = L1_u / L1_ref_u
+L1_v = L1_v / L1_ref_v
+L2_u = L2_u / L2_ref_u
+L2_v = L2_v / L2_ref_v
+
+L1_tot = ((L1_u * L1_ref_u) + (L1_v * L1_ref_v)) / (L1_ref_u + L1_ref_v)
+L2_tot = (sqrt((L2_u*L2_ref_u)**2 + (L2_v*L2_ref_v)**2)) / (sqrt(L2_ref_u**2 + L2_ref_v**2))
+
 # Write results to CSV file
 output_file = "outputs/error_write.csv"
 
