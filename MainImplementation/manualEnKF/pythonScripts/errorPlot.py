@@ -16,7 +16,7 @@ printProgress = 0
 
 num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
 # num_members = 20    # Manually set number of members for spread plot
-probeNum = [1] # Choose probe points to plot for
+probeNum = [1,6,14] # Choose probe points to plot for
 timeWindow = []  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 # File path
@@ -77,7 +77,7 @@ if wholeFieldOn:
             if not timeWindow: output_plot_path_L1 = output_path+"L1_plot.png"
             else: output_plot_path_L1 = output_path+f"L1_plot_windowed_{t_min}_{t_max}.png"
             plt.savefig(output_plot_path_L1, dpi=300)
-            print(f"L1 plot saved as '{output_plot_path_L1}'")
+            if printProgress: print(f"L1 plot saved as '{output_plot_path_L1}'")
 
             # Display the L1 plot for 5 seconds
             plt.show(block=False)
@@ -109,7 +109,7 @@ if wholeFieldOn:
             if not timeWindow: output_plot_path_L2 = output_path+"L2_plot.png"
             else: output_plot_path_L2 = output_path+f"L2_plot_windowed_{t_min}_{t_max}.png"
             plt.savefig(output_plot_path_L2, dpi=300)
-            print(f"L2 plot saved as '{output_plot_path_L2}'")
+            if printProgress: print(f"L2 plot saved as '{output_plot_path_L2}'")
 
             # Display the L2 plot for 5 seconds
             plt.show(block=False)
@@ -223,6 +223,7 @@ if probePlotOn:
 
     # Use the time array from the first member (assuming identical simulation times).
     time = data[members[0]]["time"]
+    print(time)
     num_timesteps = len(time)
     num_probe_points = data[members[0]]["u"].shape[1]
 

@@ -16,8 +16,8 @@ IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, eit
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 20  # Set the number of ensemble members
-num_loops = 299  # Set the number of EnKF filter-run loops
+num_members = 7  # Set the number of ensemble members
+num_loops = 2  # Set the number of EnKF filter-run loops
 runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs

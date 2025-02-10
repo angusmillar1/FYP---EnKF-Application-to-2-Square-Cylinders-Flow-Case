@@ -11,6 +11,104 @@ import re
 #     if num.is_integer(): num = int(num)
 #     return num
 
+def generate_R(N,sigma,rho):
+    R = np.full((N, N), rho * sigma**2)
+    np.fill_diagonal(R, sigma**2)
+    return R
+
+def generate_perturbations_cholesky(R, P):
+    N = R.shape[0]
+    # Compute Cholesky factor L, so that R = L * L.T
+    L = np.linalg.cholesky(R)
+    
+    # Preallocate array for the samples
+    epsilons = np.zeros((N, P))
+    
+    for i in range(P):
+        # Draw a standard normal vector z (N-dim)
+        z = np.random.randn(N)
+        # Transform it: epsilon = L @ z has covariance R
+        epsilons[:, i] = L @ z
+    
+    return epsilons
+
+def enkf_update_vectorized(ens_u, ens_v, u_true, v_true, 
+                           sigma_u=0.1, sigma_v=0.05, 
+                           rho_u=0.0,  rho_v=0.0):
+    """
+    Perform one EnKF update step (analysis) for separate u,v velocity components.
+    Treat all spatial points at once (no loop over points).
+    
+    Parameters
+    ----------
+    ens_u : ndarray, shape (N_p, N_e)
+        Forecast ensemble for the u-component. 
+        Each row = one spatial point, each column = one ensemble member.
+    ens_v : ndarray, shape (N_p, N_e)
+        Forecast ensemble for the v-component, same shape as ens_u.
+    u_true : ndarray, shape (N_p,)
+        "True" or reference observation for the u-component at each spatial point.
+    v_true : ndarray, shape (N_p,)
+        "True" or reference observation for the v-component at each spatial point.
+    sigma_u, sigma_v : floats
+        Standard deviations of measurement noise for u, v.
+    rho_u, rho_v : floats
+        Cross-point noise correlation for u, v (0 => diagonal R).
+    
+    Returns
+    -------
+    ens_u_an, ens_v_an : ndarrays, shape (N_p, N_e)
+        The updated (analysis) ensembles for u and v.
+    """
+    N_p, N_e = ens_u.shape  # number of points, number of ensemble members
+    
+    # (1) Build the R (covariance) matrices for u and v
+    R_u = generate_R(N_p, sigma_u, rho_u)  # shape (N_p, N_p)
+    R_v = generate_R(N_p, sigma_v, rho_v)  # shape (N_p, N_p)
+    
+    # (2) Generate random measurement-error perturbations for each ensemble member
+    #     Each of these will be shape (N_p, N_e)
+    eps_u = generate_perturbations_cholesky(R_u, N_e)
+    eps_v = generate_perturbations_cholesky(R_v, N_e)
+    
+    # (3) Construct the "perturbed observations" for each ensemble member
+    #     We'll treat each column as a distinct random draw of the observation.
+    #     u_true, v_true are shape (N_p,). We tile them into NxP, then add epsilons.
+    Y_u = np.tile(u_true, (N_e, 1)).T + eps_u  # shape (N_p, N_e)
+    Y_v = np.tile(v_true, (N_e, 1)).T + eps_v  # shape (N_p, N_e)
+
+    # (4) Compute the forecast mean for each velocity component
+    #     shape (N_p,)
+    u_mean = np.mean(ens_u, axis=1)
+    v_mean = np.mean(ens_v, axis=1)
+    
+    # (5) Compute forecast anomalies (deviations from the mean)
+    #     ens_u_ano, ens_v_ano are (N_p, N_e)
+    ens_u_ano = ens_u - u_mean[:, None]
+    ens_v_ano = ens_v - v_mean[:, None]
+    
+    # (6) Sample forecast covariance for each velocity field
+    #     shape (N_p, N_p)
+    cov_u = (1.0 / (N_e - 1.0)) * ens_u_ano @ ens_u_ano.T
+    cov_v = (1.0 / (N_e - 1.0)) * ens_v_ano @ ens_v_ano.T
+    
+    # (7) Compute the Kalman gain:
+    #     K_u, K_v are shape (N_p, N_p)
+    #     K = P_f (P_f + R)^{-1}
+    K_u = cov_u @ np.linalg.inv(cov_u + R_u)
+    K_v = cov_v @ np.linalg.inv(cov_v + R_v)
+    
+    # (8) Apply the EnKF update to each ensemble member:
+    #     X_a = X_f + K ( Y - X_f )
+    #     We can do this in a fully vectorized way:
+    #       - (Y - ens_u) is (N_p, N_e)
+    #       - K_u is (N_p, N_p), so K_u @ (Y - ens_u) is also (N_p, N_e)
+    ens_u_an = ens_u + K_u @ (Y_u - ens_u)
+    ens_v_an = ens_v + K_v @ (Y_v - ens_v)
+    
+    return ens_u_an, ens_v_an
+
+
 # # Take start time for error tracking write
 # timestep = crop_number(float(sys.argv[5]))
 
@@ -25,7 +123,7 @@ Uy_data = []
 # p_data = []
 IDs = []
 
-# Read member files
+# (1) Read member files
 Ne = 0
 for filename in sorted(os.listdir(redu_directory)):
     if filename.startswith("member") and filename.endswith(".csv"):
@@ -53,44 +151,26 @@ ref_IDs = ref_data['CellID'].values
 
 
 
-# IMPLEMENT KALMAN FILTERING MANUALLY
-obs_noise = 0.000001
-Np = len(ens_u)
+# (2) IMPLEMENT KALMAN FILTERING MANUALLY
+sigma_u, sigma_v = 0.1, 0.05    # std dev in measurement noise
+rho_u, rho_v = 0.0, 0.0         # Correlations in measurement noise (0 for now)
+Np = len(ens_u)                 # Number of points
 
-for i in range(Np):  # Loop through for each sample point
+# Generate measurement noise matrices
+R_u = generate_R(Np,sigma_u,rho_u)
+R_v = generate_R(Np,sigma_v,rho_v)
 
-    # Compute the ensemble mean
-    ens_u_mean = st.mean(ens_u[i,:])
-    ens_v_mean = st.mean(ens_v[i,:])
-    # ens_p_mean = st.mean(ens_p[i,:])
+# Add random perturbations to truth values
+epsilons_u = generate_perturbations_cholesky(R_u, Ne)
+epsilons_v = generate_perturbations_cholesky(R_v, Ne)
 
-    # Compute the ensemble extremes for error tracking
-    # ens_u_max = st.max(ens_u[i,:])
-    # ens_v_max = st.max(ens_v[i,:])
-    # ens_u_min = st.min(ens_u[i,:])
-    # ens_v_min = st.min(ens_v[i,:])
+# Call EnKF update function
+ens_u, ens_v = enkf_update_vectorized(
+        ens_u, ens_v, ref_u, ref_v,
+        sigma_u, sigma_v, rho_u, rho_v
+    )
 
-    # Compute the sample covariance between ensemble predictions and observations
-    cov_u = (1 / (Ne - 1)) * np.sum((ens_u - ens_u_mean) * (ref_u[i] - ens_u_mean))
-    cov_v = (1 / (Ne - 1)) * np.sum((ens_v - ens_v_mean) * (ref_v[i] - ens_v_mean))
-    # cov_p = (1 / (Ne - 1)) * np.sum((ens_p - ens_p_mean) * (ref_p[i] - ens_p_mean))
-
-    # Compute the variances of ensemble predictions
-    var_u = (1 / (Ne - 1)) * np.sum((ens_u - ens_u_mean)**2)
-    var_v = (1 / (Ne - 1)) * np.sum((ens_v - ens_v_mean)**2)
-    # var_p = (1 / (Ne - 1)) * np.sum((ens_p - ens_p_mean)**2)
-
-    # Compute the Kalman gain (scalar value for each point)
-    K_u = cov_u / (var_u + obs_noise**2)
-    K_v = cov_v / (var_v + obs_noise**2)
-    # K_p = cov_p / (var_p + obs_noise**2)
-
-    for j in range (Ne):  # Loop through each member to write new values to array
-        ens_u[i,j] += K_u * (ref_u[i] - ens_u[i,j])
-        ens_v[i,j] += K_v * (ref_v[i] - ens_v[i,j])
-        # ens_p[i,j] += K_p * (ref_p[i] - ens_p[i,j])
-
-
+print("Updated ensemble (u):", ens_u.shape)
 
 
 # WRITE NEW FILES

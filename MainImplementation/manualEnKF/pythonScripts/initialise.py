@@ -20,6 +20,10 @@ IC_type = sys.argv[5]
 source_dir = "exampleOpenfoamFiles/Mesh" + str(mesh_num) + "Files"
 destination_parent_dir = "memberRunFiles"
 
+
+
+# ------ DELETE DATA FROM PREVIOUS RUNS ------
+
 # Delete all existing files and directories in the destination parent directory
 if os.path.exists(destination_parent_dir):
     for item in os.listdir(destination_parent_dir):
@@ -60,8 +64,17 @@ def remove_files_in_directory(directory):
             os.remove(file_path)  # Remove the file
 remove_files_in_directory("outputs")
 remove_files_in_directory("outputs/visualisations")
+remove_files_in_directory("outputs/visualisations/animations")
+remove_files_in_directory("outputs/errorPlots")
 print("Cleared all contents in outputs")
 
+
+
+
+
+
+
+# ------ CREATE NEW FILES FOR NEW RUNS ------
 
 # Loop to copy and rename directories for each member
 for i in range(1, num_members + 1):
