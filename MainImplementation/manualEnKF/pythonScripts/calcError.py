@@ -75,7 +75,7 @@ L2_u = L2_u / L2_ref_u
 L2_v = L2_v / L2_ref_v
 
 L1_tot = ((L1_u * L1_ref_u) + (L1_v * L1_ref_v)) / (L1_ref_u + L1_ref_v)
-L2_tot = (sqrt((L2_u*L2_ref_u)**2 + (L2_v*L2_ref_v)**2)) / (sqrt(L2_ref_u**2 + L2_ref_v**2))
+L2_tot = (np.sqrt((L2_u*L2_ref_u)**2 + (L2_v*L2_ref_v)**2)) / (np.sqrt(L2_ref_u**2 + L2_ref_v**2))
 
 # Write results to CSV file
 output_file = "outputs/error_write.csv"

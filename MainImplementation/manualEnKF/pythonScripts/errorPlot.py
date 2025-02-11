@@ -11,13 +11,13 @@ import sys
 
 wholeFieldOn = 1
 probePlotOn = 1
-plotAssimInt = 0
-printProgress = 0
+plotAssimInt = 1
+printProgress = 1
 
-num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
-# num_members = 20    # Manually set number of members for spread plot
+# num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
+num_members = 20    # Manually set number of members for spread plot
 probeNum = [1,6,14] # Choose probe points to plot for
-timeWindow = []  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+timeWindow = [0,1]  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 # File path
 input_path = "outputs/"
@@ -223,7 +223,6 @@ if probePlotOn:
 
     # Use the time array from the first member (assuming identical simulation times).
     time = data[members[0]]["time"]
-    print(time)
     num_timesteps = len(time)
     num_probe_points = data[members[0]]["u"].shape[1]
 
@@ -288,7 +287,7 @@ if probePlotOn:
 
         plt.xlabel("Time")
         plt.ylabel("u velocity")
-        plt.title(f"Ensemble u Velocity at Probe ({x_p:.2f}, {y_p:.2f}, {z_p:.2f})")
+        plt.title(f"Ensemble u Velocity at Probe ({x_p:.2f}, {y_p:.2f})")
         plt.grid(True)
         plt.legend(loc="best")
 
@@ -318,7 +317,7 @@ if probePlotOn:
 
         plt.xlabel("Time")
         plt.ylabel("v velocity")
-        plt.title(f"Ensemble v Velocity at Probe ({x_p:.2f}, {y_p:.2f}, {z_p:.2f})")
+        plt.title(f"Ensemble v Velocity at Probe ({x_p:.2f}, {y_p:.2f})")
         plt.grid(True)
         plt.legend(loc="best")
 

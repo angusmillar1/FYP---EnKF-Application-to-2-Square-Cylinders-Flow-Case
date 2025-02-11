@@ -10,15 +10,15 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 0.1  # Set the time for the members to initially evolve before informing
+init_runtime = 0.5  # Set the time for the members to initially evolve before informing
 file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, either random of developed solution
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
 num_members = 20  # Set the number of ensemble members
-num_loops = 99  # Set the number of EnKF filter-run loops
-runtime = 0.1  # Set the runtime between each EnKF filtering
+num_loops = 20  # Set the number of EnKF filter-run loops
+runtime = 0.5  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
 prog_endtime = init_runtime + num_loops * runtime
@@ -59,7 +59,7 @@ start_time = init_runtime
 for loop_num in range(num_loops):
     print(f"\nEnKF LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
-    subprocess.run([sys.executable, "pythonScripts/DAPPER.py", str(start_time)])
+    subprocess.run([sys.executable, "pythonScripts/EnKFFull.py"])
     print("\nWRITING NEW SOURCE FILES\n")
     subprocess.run([sys.executable, "pythonScripts/genNewICs.py", str(num_members), str(mesh_num), str(runtime), str(file_write_freq), str(start_time)])
     print("\nRUNNNING OPENFOAM CASES\n")
@@ -78,6 +78,7 @@ print("\nSTARTING FINAL PROCESSING\n")
 subprocess.run([sys.executable, "pythonScripts/tidy.py"])
 
 # Plot error metrics through time
+print("Creating error plots")
 subprocess.run([sys.executable, "pythonScripts/errorPlot.py", str(num_members)])
 
 # Copy all .vtk files to outputs directory to allow for easily visualising in paraview

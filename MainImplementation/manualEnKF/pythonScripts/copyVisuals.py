@@ -5,7 +5,7 @@ import re
 # Directories
 member_run_files = "memberRunFiles"
 # input_directory = "../referenceSolutions/Mesh1RandT500"
-input_directory = "../referenceSolutions/Mesh1DevT1000"
+# input_directory = "../referenceSolutions/Mesh1DevT1000"
 output_directory = "outputs/visualisations"
 
 # Ensure the output directory exists
@@ -36,14 +36,14 @@ for member_dir in os.listdir(member_run_files):
             if match and match.group(1) in common_xxx_numbers:
                 src_file = os.path.join(member_path, file)
                 dst_file = os.path.join(output_directory, file)
-                shutil.copy2(src_file, dst_file)
+                shutil.move(src_file, dst_file)
 
-# Copy matching .vtk files from input/ to outputs/visualisations
-for file in os.listdir(input_directory):
-    match = vtk_pattern.match(file)
-    if match and match.group(1) in common_xxx_numbers:
-        src_file = os.path.join(input_directory, file)
-        dst_file = os.path.join(output_directory, file)
-        shutil.copy2(src_file, dst_file)
+# Copy matching .vtk files from input/ to outputs/visualisations (if separate reference solution)
+# for file in os.listdir(input_directory):
+#     match = vtk_pattern.match(file)
+#     if match and match.group(1) in common_xxx_numbers:
+#         src_file = os.path.join(input_directory, file)
+#         dst_file = os.path.join(output_directory, file)
+#         shutil.copy2(src_file, dst_file)
 
 print("All .vtk files have been copied successfully.")

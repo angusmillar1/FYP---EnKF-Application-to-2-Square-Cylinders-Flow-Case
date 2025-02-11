@@ -68,15 +68,25 @@ def live_plot():
     manager = plt.get_current_fig_manager() # Get the current figure manager
     manager.window.geometry("1000x600+0+0")  # Width x Height + X Offset + Y Offset
 
+    bar_labels = []
+    for member in member_dirs:
+        basename = os.path.basename(member)
+        if basename.startswith("member"):
+            label = "mem" + basename[6:]
+        else:
+            label = basename
+        bar_labels.append(label)
+
     while True:
         ax.clear()
         # Prepare data for the bar chart
         bar_positions = range(len(member_dirs))
         bar_heights = [case_time_data[member] for member in member_dirs]
-        bar_labels = [os.path.basename(member) for member in member_dirs]
+        # bar_labels = [os.path.basename(member) for member in member_dirs]
         
         # Plot bars
         ax.bar(bar_positions, bar_heights, tick_label=bar_labels, color="skyblue", alpha=0.8)
+        plt.setp(ax.get_xticklabels(), rotation=90)
         ax.axhline(prog_endtime, color="green", linestyle="-", linewidth=1.5, label=f"Program Runtime = {prog_endtime:.2f}")
         ax.axhline(target_runtime, color="red", linestyle="--", linewidth=1.5, label=f"End Time = {target_runtime:.2f}")
         ax.axhline(start_time, color="black", linestyle="--", linewidth=1.5, label=f"Start Time = {start_time:.2f}")
