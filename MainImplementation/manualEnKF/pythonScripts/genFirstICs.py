@@ -436,21 +436,23 @@ Square_down
 // ************************************************************************* //
 """)
 
-def copy_reference_files():
+def copy_reference_files(ref_destination_dir,randNum):
     # Set path to find reference files
     source_dir = "exampleOpenfoamFiles/Mesh1DevICs"
-    ref_destination_dir = "memberRunFiles/refSoln/0/"
 
     # Copy pressure file
     shutil.copy(source_dir+"/p", ref_destination_dir)
 
     # Select and copy a random initial scene file
-    file_path = os.path.join(source_dir, "U", "U"+str(random.randint(0,100)))
+    file_path = os.path.join(source_dir, "U", "U"+str(randNum))
     shutil.copy(file_path, ref_destination_dir+"U")
 
 
 
 def main():
+    # Initialise random scene selection for reference (and members if used)
+    if IC_type == "prev": mem_randNum_set = set()   # Set to avoid duplicate members
+    ref_randNum = random.randint(0,100)             # Select random scene for reference solution
 
     for memIndex in range(1, num_members+1):
         if IC_type == "rand":
@@ -480,21 +482,32 @@ def main():
             v_vals = Y_rand[num_cells:, 0]                  # Shape: (num_cells,)
             u_vectors = np.column_stack((u_vals, v_vals))   # Shape: (num_cells, 2)
             p_values = np.zeros(num_cells)             # Just use zeros for now, should work out
+        elif IC_type == "prev":
+            mem_randNum = random.randint(0,100)
+            while mem_randNum == ref_randNum or mem_randNum in mem_randNum_set: mem_randNum = random.randint(0,100)
+            mem_randNum_set.add(mem_randNum)
+            outputDir = outputPath + "member" + str(memIndex)
+            copy_reference_files(outputDir+"/0/", mem_randNum)
+            write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq)
+            print(f"Member{memIndex} files written using U{mem_randNum}.")
         else:
             raise ValueError("Invalid initial condition type selected")
         
-        # Write to files
-        outputDir = outputPath + "member" + str(memIndex)
-        print(outputDir)
-        write_U_file(outputDir+"/0/U", u_vectors, num_cells, timeStep)
-        # write_p_file(outputDir+"/0/p", p_values, num_cells, timeStep)
-        write_zero_p_file(outputDir+"/0/p", timeStep)
-        write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq)
-        print("Files 'U', 'p' and 'controlDict' have been generated.")
+        if IC_type != "prev":
+            # Write to files
+            outputDir = outputPath + "member" + str(memIndex)
+            # print(outputDir)
+            write_U_file(outputDir+"/0/U", u_vectors, num_cells, timeStep)
+            # write_p_file(outputDir+"/0/p", p_values, num_cells, timeStep)
+            write_zero_p_file(outputDir+"/0/p", timeStep)
+            write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq)
+            print("Files 'U', 'p' and 'controlDict' have been generated.")
 
     # Also do reference solution
-    copy_reference_files()
+    copy_reference_files(outputPath+"refSoln/0/", ref_randNum)   
     write_controlDict_file(outputPath+"refSoln/system/controlDict", init_runtime, file_write_freq)
+    print(f"Reference solutions files written using U{ref_randNum}.")
+
 
 if __name__ == "__main__":
     main()

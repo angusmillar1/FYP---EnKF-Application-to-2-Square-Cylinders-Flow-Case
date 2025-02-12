@@ -33,8 +33,8 @@ def generate_perturbations_cholesky(R, P):
     return epsilons
 
 def enkf_update_vectorized(ens_u, ens_v, u_true, v_true, 
-                           sigma_u=0.1, sigma_v=0.05, 
-                           rho_u=0.0,  rho_v=0.0):
+                           sigma_u, sigma_v, 
+                           rho_u,  rho_v):
     """
     Perform one EnKF update step (analysis) for separate u,v velocity components.
     Treat all spatial points at once (no loop over points).
@@ -152,7 +152,7 @@ ref_IDs = ref_data['CellID'].values
 
 
 # (2) IMPLEMENT KALMAN FILTERING MANUALLY
-sigma_u, sigma_v = 0.05, 0.05    # std dev in measurement noise
+sigma_u, sigma_v = 0.1, 0.05    # std dev in measurement noise
 rho_u, rho_v = 0.0, 0.0         # Correlations in measurement noise (0 for now)
 Np = len(ens_u)                 # Number of points
 

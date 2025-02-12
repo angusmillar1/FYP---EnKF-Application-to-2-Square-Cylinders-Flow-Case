@@ -10,6 +10,7 @@ import numpy as np
 
 plotAll = 0
 plotAvg = 1
+cleanpngs = 1
 
 start_timing = time.time()
 
@@ -135,6 +136,10 @@ if plotAll:
         generate_gif(image_files, gif_file)
 
 
+
+
+
+
 # Plot only ensemble average and reference fields
 if plotAvg:
     # ---------------------------
@@ -154,7 +159,7 @@ if plotAvg:
     
     image_files_avg = []
     for t in timesteps_sorted:
-        if int(t) > 800: break
+        # if int(t) > 800: break  # for if only a limited time range is desired
         files_t = member_files_by_timestep[t]
         sum_array = None
         count = 0
@@ -252,10 +257,11 @@ if plotAvg:
 
 
 # Delete all .png files to save storage
-for item in os.listdir(output_dir):
-    file_path = os.path.join(output_dir, item)
-    if os.path.isfile(file_path):
-        os.remove(file_path)
+if cleanpngs:
+    for item in os.listdir(output_dir):
+        file_path = os.path.join(output_dir, item)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 end_timing = time.time()
 print("Animation creation runtime = " + str(end_timing - start_timing))

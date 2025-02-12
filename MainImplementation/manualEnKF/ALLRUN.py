@@ -10,15 +10,15 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 0.5  # Set the time for the members to initially evolve before informing
+init_runtime = 0.1  # Set the time for the members to initially evolve before informing
 file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
-IC_type = "POD"  # "rand" / "dev" / "POD". Define initial conditiion to use, either random of developed solution
+IC_type = "prev"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion to use, either random of developed solution
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
 num_members = 20  # Set the number of ensemble members
-num_loops = 20  # Set the number of EnKF filter-run loops
-runtime = 0.5  # Set the runtime between each EnKF filtering
+num_loops = 99  # Set the number of EnKF filter-run loops
+runtime = 0.1  # Set the runtime between each EnKF filtering
 
 # Calculated Inputs
 prog_endtime = init_runtime + num_loops * runtime
@@ -82,10 +82,12 @@ print("Creating error plots")
 subprocess.run([sys.executable, "pythonScripts/errorPlot.py", str(num_members)])
 
 # Copy all .vtk files to outputs directory to allow for easily visualising in paraview
-# subprocess.run([sys.executable, "pythonScripts/copyVisuals.py"])
+print("Moving vtk files")
+subprocess.run([sys.executable, "pythonScripts/copyVisuals.py"])
 
 # Automatically create .png files and .gif animations including the positions of sample points
-# subprocess.run([sys.executable, "pythonScripts/animationMake2.py"])
+print("Creating animations")
+subprocess.run([sys.executable, "pythonScripts/animationMake2.py"])
 
 
 # Time runtime 
