@@ -16,12 +16,14 @@ IC_type = "prev"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion t
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
 
 # Ensemble and filtering parameters
-num_members = 20  # Set the number of ensemble members
-num_loops = 99  # Set the number of EnKF filter-run loops
-runtime = 0.1  # Set the runtime between each EnKF filtering
+num_members = 20    # Set the number of ensemble members
+runtime = 0.1       # Set the runtime between each EnKF filtering
+prog_endtime = 10   # Set the total run time of the program
 
 # Calculated Inputs
-prog_endtime = init_runtime + num_loops * runtime
+num_loops = (prog_endtime - init_runtime)/runtime   # Determine the number of EnKF filter-run loops
+if int(num_loops) != num_loops: print("WARNING - INVALID NUMBER OF LOOPS")
+num_loops = int(num_loops)
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -59,7 +61,7 @@ start_time = init_runtime
 for loop_num in range(num_loops):
     print(f"\nEnKF LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
-    subprocess.run([sys.executable, "pythonScripts/EnKFFull.py"])
+    subprocess.run([sys.executable, "pythonScripts/EnKFPart.py"])
     print("\nWRITING NEW SOURCE FILES\n")
     subprocess.run([sys.executable, "pythonScripts/genNewICs.py", str(num_members), str(mesh_num), str(runtime), str(file_write_freq), str(start_time)])
     print("\nRUNNNING OPENFOAM CASES\n")

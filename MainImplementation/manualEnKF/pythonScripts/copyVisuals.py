@@ -6,7 +6,7 @@ import re
 member_run_files = "memberRunFiles"
 # input_directory = "../referenceSolutions/Mesh1RandT500"
 # input_directory = "../referenceSolutions/Mesh1DevT1000"
-output_directory = "outputs/visualisations"
+output_directory = "outputs/visualisations/vtk"
 
 # Ensure the output directory exists
 os.makedirs(output_directory, exist_ok=True)

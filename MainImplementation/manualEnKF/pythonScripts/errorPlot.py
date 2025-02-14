@@ -9,15 +9,15 @@ import sys
 
 # CHOOSE WHAT TO PLOT
 
-wholeFieldOn = 1
+wholeFieldOn = 0
 probePlotOn = 1
-plotAssimInt = 0
+plotAssimInt = 1
 printProgress = 1
 
-num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
-# num_members = 20    # Manually set number of members for spread plot
+# num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
+num_members = 20    # Manually set number of members for spread plot
 probeNum = [1,6,14] # Choose probe points to plot for
-timeWindow = []  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+timeWindow = [0,2]  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 # File path
 input_path = "outputs/"

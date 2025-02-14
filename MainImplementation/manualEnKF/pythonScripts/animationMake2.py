@@ -22,7 +22,7 @@ points_to_add = pd.read_csv(os.path.join(parent_dir, "sample_points_locations.cs
 points_to_add = np.hstack((points_to_add[:, 1:3],np.ones((points_to_add.shape[0], 1))))
 
 # Set path to file directory
-input_dir = os.path.join(parent_dir, "visualisations")
+input_dir = os.path.join(parent_dir, "visualisations/vtk")
 output_dir = os.path.join(input_dir, "animations")
 gif_dir = os.path.join(output_dir, "gifs")
 
@@ -262,6 +262,8 @@ if cleanpngs:
         file_path = os.path.join(output_dir, item)
         if os.path.isfile(file_path):
             os.remove(file_path)
+
+
 
 end_timing = time.time()
 print("Animation creation runtime = " + str(end_timing - start_timing))
