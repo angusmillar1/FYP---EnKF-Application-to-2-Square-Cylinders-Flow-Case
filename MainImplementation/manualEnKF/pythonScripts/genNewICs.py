@@ -404,13 +404,22 @@ def main():
         u_vectors = np.column_stack((u,v))
         # p_values = data['p'].values
 
+        # Clear all current files to avoid clashes with second-order scheme data
+        outputDir = "memberRunFiles/member" + str(memIndex)
+        timestep_filename = os.path.join(outputDir, str(startTime))
+        for item in os.listdir(timestep_filename):
+            item_path = os.path.join(timestep_filename, item)
+            if os.path.isfile(item_path):
+                try:
+                    os.remove(item_path)
+                    print(f"Deleted: {item_path}")
+                except Exception as e:
+                    print(f"Failed to delete {item_path}: {e}")
         
         # Write to files
-        # outputDir = outputPath + "member" + str(memIndex)
-        outputDir = "memberRunFiles/member" + str(memIndex)
-        write_U_file(os.path.join(outputDir,str(startTime),"U"), u_vectors, num_cells, startTime)
+        write_U_file(os.path.join(timestep_filename,"U"), u_vectors, num_cells, startTime)
         # write_p_file(os.path.join(outputDir,str(startTime),"p"), p_values, num_cells, startTime)
-        write_zero_p_file(os.path.join(outputDir,str(startTime),"p"), startTime)
+        write_zero_p_file(os.path.join(timestep_filename,"p"), startTime)
         write_controlDict_file(outputDir+"/system/controlDict", file_write_freq, startTime, endTime, probe_points)
         # print("Files 'U', 'p' and 'controlDict' have been generated.")
 

@@ -145,7 +145,7 @@ measured_idx = [full_IDs_dict[id_] for id_ in ref_IDs if id_ in full_IDs_dict]
 measured_idx = np.array(measured_idx)  # shape: (P,)
 
 # (4) Set measurement noise parameters.
-sigma_u, sigma_v = 0.1, 0.05    # standard deviations for Ux and Uy
+sigma_u, sigma_v = 0.02, 0.01    # standard deviations for Ux and Uy
 rho_u, rho_v     = 0.0, 0.0      # assume no cross–point correlation for now
 
 # (5) Update the full field ensemble using the EnKF update.

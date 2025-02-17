@@ -9,15 +9,16 @@ import sys
 
 # CHOOSE WHAT TO PLOT
 
-wholeFieldOn = 0
+wholeFieldOn = 1
 probePlotOn = 1
 plotAssimInt = 1
 printProgress = 1
 
-# num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
-num_members = 20    # Manually set number of members for spread plot
-probeNum = [1,6,14] # Choose probe points to plot for
-timeWindow = [0,2]  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
+# num_members = 20    # Manually set number of members for spread plot
+probeNum = [1,2,3,4] # Choose probe points to plot for
+timeWindow = []  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+assimInt = 10
 
 # File path
 input_path = "outputs/"
@@ -294,7 +295,7 @@ if probePlotOn:
         if plotAssimInt:
             # Use MultipleLocator for vertical lines every 0.1 time units
             ax = plt.gca()  # Get current axes
-            ax.xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
             ax.grid(which='major', axis='x', linestyle='--', color='black')    
 
         plt.tight_layout()
@@ -324,7 +325,7 @@ if probePlotOn:
         if plotAssimInt:
             # Use MultipleLocator for vertical lines every 0.1 time units
             ax = plt.gca()  # Get current axes
-            ax.xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
             ax.grid(which='major', axis='x', linestyle='--', color='black')    
 
         plt.tight_layout()

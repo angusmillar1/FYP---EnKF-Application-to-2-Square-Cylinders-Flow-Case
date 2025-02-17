@@ -10,7 +10,8 @@ import numpy as np
 
 plotAll = 0
 plotAvg = 1
-cleanpngs = 1
+cleanpngs = 0
+cleanvtks = 0
 
 start_timing = time.time()
 
@@ -223,10 +224,10 @@ if plotAvg:
         for file in grouped_files["refSoln"]:
             vtk_object = pv.read(file)
             # Retain only the necessary field "U"
-            fields_to_keep = ["U"]
-            for field in list(vtk_object.point_data.keys()):
-                if field not in fields_to_keep:
-                    vtk_object.point_data.remove(field)
+            # fields_to_keep = ["U"]
+            # for field in list(vtk_object.point_data.keys()):
+            #     if field not in fields_to_keep:
+            #         vtk_object.point_data.remove(field)
             vtk_object["Ux"] = vtk_object["U"][:, 0]
     
             # Create a PyVista plotter as before
@@ -260,6 +261,12 @@ if plotAvg:
 if cleanpngs:
     for item in os.listdir(output_dir):
         file_path = os.path.join(output_dir, item)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+if cleanvtks:
+    for item in os.listdir(input_dir):
+        file_path = os.path.join(input_dir,item)
         if os.path.isfile(file_path):
             os.remove(file_path)
 

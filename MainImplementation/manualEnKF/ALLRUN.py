@@ -10,15 +10,15 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 0.1  # Set the time for the members to initially evolve before informing
-file_write_freq = 10  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
-IC_type = "prev"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion to use, either random of developed solution
-exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Make sure this matches IC and mesh type choice
+init_runtime = 10  # Set the time for the members to initially evolve before informing
+file_write_freq = 50  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
+IC_type = "POD"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion type to use: either random, developed, POD-based, or previous solution
+exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with ensemble members now, shouldn't ever have to change
 
 # Ensemble and filtering parameters
 num_members = 20    # Set the number of ensemble members
-runtime = 0.1       # Set the runtime between each EnKF filtering
-prog_endtime = 10   # Set the total run time of the program
+runtime = 10       # Set the runtime between each EnKF filtering
+prog_endtime = 30   # Set the total run time of the program
 
 # Calculated Inputs
 num_loops = (prog_endtime - init_runtime)/runtime   # Determine the number of EnKF filter-run loops
@@ -61,7 +61,7 @@ start_time = init_runtime
 for loop_num in range(num_loops):
     print(f"\nEnKF LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
-    subprocess.run([sys.executable, "pythonScripts/EnKFPart.py"])
+    subprocess.run([sys.executable, "pythonScripts/EnKFFull.py"])
     print("\nWRITING NEW SOURCE FILES\n")
     subprocess.run([sys.executable, "pythonScripts/genNewICs.py", str(num_members), str(mesh_num), str(runtime), str(file_write_freq), str(start_time)])
     print("\nRUNNNING OPENFOAM CASES\n")

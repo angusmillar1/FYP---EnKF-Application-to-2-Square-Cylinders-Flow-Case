@@ -152,7 +152,7 @@ ref_IDs = ref_data['CellID'].values
 
 
 # (2) IMPLEMENT KALMAN FILTERING MANUALLY
-sigma_u, sigma_v = 0.1, 0.05    # std dev in measurement noise
+sigma_u, sigma_v = 0.02, 0.01    # std dev in measurement noise
 rho_u, rho_v = 0.0, 0.0         # Correlations in measurement noise (0 for now)
 Np = len(ens_u)                 # Number of points
 

@@ -56,7 +56,7 @@ for file in os.listdir("EnKFMeshData/filteredMeshData"):
         os.remove(file_path)  # Delete the file
 print("Cleared all contents in filteredMeshData")
 
-# Also delete past error data
+# Also delete past error and visualisation data (to avoid confusion with past runs)
 def remove_files_in_directory(directory):
     for file_name in os.listdir(directory):
         file_path = os.path.join(directory, file_name)
@@ -65,6 +65,8 @@ def remove_files_in_directory(directory):
 remove_files_in_directory("outputs")
 remove_files_in_directory("outputs/visualisations")
 remove_files_in_directory("outputs/visualisations/animations")
+remove_files_in_directory("outputs/visualisations/animations/gifs")
+remove_files_in_directory("outputs/visualisations/vtk")
 remove_files_in_directory("outputs/errorPlots")
 print("Cleared all contents in outputs")
 
