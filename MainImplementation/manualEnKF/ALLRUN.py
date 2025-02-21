@@ -10,20 +10,22 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-init_runtime = 10  # Set the time for the members to initially evolve before informing
-file_write_freq = 50  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
+file_write_freq = 20  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion type to use: either random, developed, POD-based, or previous solution
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with ensemble members now, shouldn't ever have to change
+# init_runtime = 5  # Set the time for the members to initially evolve before informing (commented if same as runtime)
 
 # Ensemble and filtering parameters
-num_members = 20    # Set the number of ensemble members
-runtime = 10       # Set the runtime between each EnKF filtering
-prog_endtime = 30   # Set the total run time of the program
+num_members = 10    # Set the number of ensemble members
+runtime = 1         # Set the runtime between each EnKF filtering
+prog_endtime = 5   # Set the total run time of the program
 
 # Calculated Inputs
+init_runtime = runtime   # Comment if different initial runtime required - unlikely
 num_loops = (prog_endtime - init_runtime)/runtime   # Determine the number of EnKF filter-run loops
 if int(num_loops) != num_loops: print("WARNING - INVALID NUMBER OF LOOPS")
 num_loops = int(num_loops)
+
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -61,7 +63,7 @@ start_time = init_runtime
 for loop_num in range(num_loops):
     print(f"\nEnKF LOOP {loop_num+1}/{num_loops}\n")
     start_daploop_timing = time.time()
-    subprocess.run([sys.executable, "pythonScripts/EnKFFull.py"])
+    subprocess.run([sys.executable, "pythonScripts/EnKFFull2.py"])
     print("\nWRITING NEW SOURCE FILES\n")
     subprocess.run([sys.executable, "pythonScripts/genNewICs.py", str(num_members), str(mesh_num), str(runtime), str(file_write_freq), str(start_time)])
     print("\nRUNNNING OPENFOAM CASES\n")
@@ -81,7 +83,7 @@ subprocess.run([sys.executable, "pythonScripts/tidy.py"])
 
 # Plot error metrics through time
 print("Creating error plots")
-subprocess.run([sys.executable, "pythonScripts/errorPlot.py", str(num_members)])
+subprocess.run([sys.executable, "pythonScripts/errorPlot.py", str(num_members), str(runtime)])
 
 # Copy all .vtk files to outputs directory to allow for easily visualising in paraview
 print("Moving vtk files")

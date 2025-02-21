@@ -8,17 +8,30 @@ import numpy as np
 import sys
 
 # CHOOSE WHAT TO PLOT
-
 wholeFieldOn = 1
 probePlotOn = 1
 plotAssimInt = 1
 printProgress = 1
 
-num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
-# num_members = 20    # Manually set number of members for spread plot
-probeNum = [1,2,3,4] # Choose probe points to plot for
-timeWindow = []  # Select region in time to plot, eg could be [2, 5] or left empty for whole domain.
-assimInt = 10
+if len(sys.argv) > 1 and sys.argv[1]:
+    # Inherited inputs if calling from Allrun.py 
+    num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
+    assimInt = float(sys.argv[2])   # Get assimilation interval for plotting of vert lines
+else:
+    # Equivalent inherited inputs if running independtly
+    num_members = 20    # Manually set number of members for spread plot
+    assimInt = 2       # Manually set assimilation interval for plotting of vert lines
+
+# Other plotting inputs
+probeNum = [1,2] # Choose probe points to plot for
+
+if len(sys.argv) > 1 and sys.argv[1]:
+    timeWindow = []     # Automatically select whole domain when run from allrun
+else:
+    timeWindow = [0,30] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+
+
+
 
 # File path
 input_path = "outputs/"

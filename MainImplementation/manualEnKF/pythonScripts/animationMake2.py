@@ -10,7 +10,7 @@ import numpy as np
 
 plotAll = 0
 plotAvg = 1
-cleanpngs = 0
+cleanpngs = 1
 cleanvtks = 0
 
 start_timing = time.time()
@@ -23,9 +23,10 @@ points_to_add = pd.read_csv(os.path.join(parent_dir, "sample_points_locations.cs
 points_to_add = np.hstack((points_to_add[:, 1:3],np.ones((points_to_add.shape[0], 1))))
 
 # Set path to file directory
-input_dir = os.path.join(parent_dir, "visualisations/vtk")
+input_dir = os.path.join(parent_dir, "visualisations")
 output_dir = os.path.join(input_dir, "animations")
 gif_dir = os.path.join(output_dir, "gifs")
+vtk_dir = os.path.join(input_dir, "vtk")
 
 # Clean the output directories
 if os.path.exists(output_dir):
@@ -43,8 +44,8 @@ def add_points(plotter, points):
 
 # File patterns
 patterns = [
-    os.path.join(input_dir, "member*_*.vtk"),
-    os.path.join(input_dir, "refSoln_*.vtk"),
+    os.path.join(vtk_dir, "member*_*.vtk"),
+    os.path.join(vtk_dir, "refSoln_*.vtk"),
 ]
 
 # Get list of files
@@ -265,8 +266,8 @@ if cleanpngs:
             os.remove(file_path)
 
 if cleanvtks:
-    for item in os.listdir(input_dir):
-        file_path = os.path.join(input_dir,item)
+    for item in os.listdir(vtk_dir):
+        file_path = os.path.join(vtk_dir,item)
         if os.path.isfile(file_path):
             os.remove(file_path)
 

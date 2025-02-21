@@ -412,7 +412,7 @@ def main():
             if os.path.isfile(item_path):
                 try:
                     os.remove(item_path)
-                    print(f"Deleted: {item_path}")
+                    # print(f"Deleted: {item_path}")
                 except Exception as e:
                     print(f"Failed to delete {item_path}: {e}")
         

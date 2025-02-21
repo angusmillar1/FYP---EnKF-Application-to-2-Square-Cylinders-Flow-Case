@@ -139,18 +139,22 @@ ens_v_full = np.column_stack(full_ens_v_list)  # shape: (N_full, Ne)
 
 # (3) Determine which cells in the full field are measured.
 # Build a dictionary mapping full field cell IDs to their index.
-full_IDs_dict = {id_: idx for idx, id_ in enumerate(IDs_full)}
+# full_IDs_dict = {id_: idx for idx, id_ in enumerate(IDs_full)}
 # For each cell ID in the reduced (measurement) data, find its index in the full field.
-measured_idx = [full_IDs_dict[id_] for id_ in ref_IDs if id_ in full_IDs_dict]
-measured_idx = np.array(measured_idx)  # shape: (P,)
+# measured_idx = [full_IDs_dict[id_] for id_ in ref_IDs if id_ in full_IDs_dict]
+# measured_idx = np.array(measured_idx)  # shape: (P,)
+# print(f"MEASURED SAMPLE POINTS: {measured_idx}")
+# print(f"REF IDS: {ref_IDs}")
+# Just get from ref_IDs instead?? -> confirmed same thing so doesnt matter
+# --> Now just putting ref_IDs into function below
 
 # (4) Set measurement noise parameters.
-sigma_u, sigma_v = 0.02, 0.01    # standard deviations for Ux and Uy
+sigma_u, sigma_v = 0.05, 0.025    # standard deviations for Ux and Uy
 rho_u, rho_v     = 0.0, 0.0      # assume no cross–point correlation for now
 
 # (5) Update the full field ensemble using the EnKF update.
-ens_u_full_updated = enkf_update_full_field(ens_u_full, ref_u, measured_idx, sigma_u, rho_u)
-ens_v_full_updated = enkf_update_full_field(ens_v_full, ref_v, measured_idx, sigma_v, rho_v)
+ens_u_full_updated = enkf_update_full_field(ens_u_full, ref_u, ref_IDs, sigma_u, rho_u)
+ens_v_full_updated = enkf_update_full_field(ens_v_full, ref_v, ref_IDs, sigma_v, rho_v)
 
 # (6) Write the updated full field back to CSV files.
 for i, filename in enumerate(member_filenames):
