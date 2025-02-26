@@ -10,15 +10,15 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 1  # Select the Mesh to use
-file_write_freq = 20  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
+file_write_freq = 50  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion type to use: either random, developed, POD-based, or previous solution
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with ensemble members now, shouldn't ever have to change
 # init_runtime = 5  # Set the time for the members to initially evolve before informing (commented if same as runtime)
 
 # Ensemble and filtering parameters
-num_members = 10    # Set the number of ensemble members
-runtime = 1         # Set the runtime between each EnKF filtering
-prog_endtime = 5   # Set the total run time of the program
+num_members = 20    # Set the number of ensemble members
+runtime = 5         # Set the runtime between each EnKF filtering
+prog_endtime = 50   # Set the total run time of the program
 
 # Calculated Inputs
 init_runtime = runtime   # Comment if different initial runtime required - unlikely

@@ -27,7 +27,7 @@ def generate_perturbations_cholesky(R, P):
         epsilons[:, i] = L @ z
     return epsilons
 
-def enkf_update_full_field_combined(ens, y, measured_idx, R):
+def enkf_update_full_field_combined(ens, y, measured_idx, R, infl):
     """
     Perform an EnKF update for the full combined state vector.
     
@@ -58,8 +58,8 @@ def enkf_update_full_field_combined(ens, y, measured_idx, R):
     Y = np.tile(y, (N_e, 1)).T + eps   # shape (2P, N_e)
     
     # (c) Compute the full–state ensemble mean and anomalies.
-    x_mean = np.mean(ens, axis=1)        # shape (2N,)
-    X_ano  = ens - x_mean[:, None]       # shape (2N, N_e)
+    x_mean = np.mean(ens, axis=1)               # shape (2N,)
+    X_ano  = (ens - x_mean[:, None]) * infl     # shape (2N, N_e)
     
     # (d) Extract the measurement anomalies using the measured indices.
     S = X_ano[measured_idx, :]           # shape (2P, N_e)
@@ -137,7 +137,8 @@ measured_idx_combined = np.concatenate((ref_IDs, ref_IDs + N_full))
 
 # (5) Set measurement noise parameters and construct the combined noise covariance.
 sigma_u, sigma_v = 0.05, 0.025    # standard deviations for Ux and Uy
-rho_u, rho_v     = 0.0, 0.0        # assume no cross-point correlation
+rho_u, rho_v     = 0.0, 0.0       # assume no cross-point correlation
+inflationFactor  = 1.04           # inflation applied to anomaly matrix to prevent collapse
 
 R_u = generate_R(P, sigma_u, rho_u)
 R_v = generate_R(P, sigma_v, rho_v)
@@ -148,7 +149,7 @@ R_combined = np.block([
 ])  # Need to change if rho becomes non-zero and there are quanitifyable correlations
 
 # (6) Perform the combined EnKF update.
-ens_combined_updated = enkf_update_full_field_combined(ens_combined, y_combined, measured_idx_combined, R_combined)
+ens_combined_updated = enkf_update_full_field_combined(ens_combined, y_combined, measured_idx_combined, R_combined, inflationFactor)
 
 # (7) Split the updated combined state back into u and v components.
 ens_u_full_updated = ens_combined_updated[:N_full, :]

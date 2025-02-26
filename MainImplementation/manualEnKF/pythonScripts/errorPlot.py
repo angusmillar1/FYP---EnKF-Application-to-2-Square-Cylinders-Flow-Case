@@ -20,15 +20,15 @@ if len(sys.argv) > 1 and sys.argv[1]:
 else:
     # Equivalent inherited inputs if running independtly
     num_members = 20    # Manually set number of members for spread plot
-    assimInt = 2       # Manually set assimilation interval for plotting of vert lines
+    assimInt = 5       # Manually set assimilation interval for plotting of vert lines
 
 # Other plotting inputs
-probeNum = [1,2] # Choose probe points to plot for
+probeNum = [1,2,27] # Choose probe points to plot for
 
 if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [0,30] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 
 
@@ -65,7 +65,7 @@ if wholeFieldOn:
             data = data[(data["T"] >= t_min) & (data["T"] <= t_max)]
 
         # Check if the required columns exist
-        required_columns = ["T", "L1_u", "L1_v", "L1_tot", "L2_u", "L2_v", "L2_tot"]
+        required_columns = ["T", "L1_u", "L1_v", "L1_tot", "L2_u", "L2_v", "L2_tot", "MSE_u", "MSE_v", "MSE_tot"]
 
         if all(col in data.columns for col in required_columns):
             # ---------------------------
@@ -126,6 +126,36 @@ if wholeFieldOn:
             if printProgress: print(f"L2 plot saved as '{output_plot_path_L2}'")
 
             # Display the L2 plot for 5 seconds
+            plt.show(block=False)
+            start_plot_timer = timepkg.time()
+            while timepkg.time() - start_plot_timer < 2:
+                plt.pause(0.1)
+            plt.close()
+
+            # ---------------------------
+            # MSE Plot
+            # ---------------------------
+            plt.figure(figsize=(10, 6))
+            plt.plot(data["T"], data["MSE_u"], label="MSE_u", marker='o')
+            plt.plot(data["T"], data["MSE_v"], label="MSE_v", marker='s')
+            plt.plot(data["T"], data["MSE_tot"], label="MSE_tot", marker='d')
+
+            plt.xlim(left=0)
+            plt.ylim(bottom=0)
+            plt.xlabel("Time (T)", fontsize=12)
+            plt.ylabel("MSE", fontsize=12)
+            plt.title("MSE Over Time", fontsize=14)
+            plt.legend(loc="upper right", fontsize=10)
+            plt.grid(True)
+            plt.tight_layout()
+
+            # Save the MSE plot
+            if not timeWindow: output_plot_path_MSE = output_path+"MSE_plot.png"
+            else: output_plot_path_MSE = output_path+f"MSE_plot_windowed_{t_min}_{t_max}.png"
+            plt.savefig(output_plot_path_MSE, dpi=300)
+            if printProgress: print(f"MSE plot saved as '{output_plot_path_MSE}'")
+
+            # Display the MSE plot for 5 seconds
             plt.show(block=False)
             start_plot_timer = timepkg.time()
             while timepkg.time() - start_plot_timer < 2:

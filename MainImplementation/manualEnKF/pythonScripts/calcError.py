@@ -81,6 +81,13 @@ L2_v = L2_v_dim / L2_v_ref
 L1_tot = (np.sum((np.abs(err_u) + np.abs(err_v))*cellVols)) / (np.sum((np.abs(ref_u) + np.abs(ref_v))*cellVols))
 L2_tot = (np.sqrt(np.sum(((err_u**2) + (err_v**2))*cellVols))) / (np.sqrt(np.sum(((ref_u**2) + (ref_v**2))*cellVols)))
 
+# MSE
+NP = len(ens_u_mean)
+MSE_u = (1/NP) * (np.sum(err_u**2))
+MSE_v = (1/NP) * (np.sum(err_v**2))
+MSE_tot = (1/(2*NP)) * (np.sum((np.vstack((err_u,err_v)))**2))
+
+
 # Write results to CSV file
 output_file = "outputs/error_write.csv"
 
@@ -91,7 +98,7 @@ if not os.path.exists(output_file):
         writer = csv.writer(file)
         # Uncomment the following if you add pressure tracking later:
         # writer.writerow(["T", "L1_u", "L1_v", "L1_p", "L1_tot", "L2_u", "L2_v", "L2_p", "L2_tot"])
-        writer.writerow(["T", "L1_u", "L1_v", "L1_tot", "L2_u", "L2_v", "L2_tot"])
+        writer.writerow(["T", "L1_u", "L1_v", "L1_tot", "L2_u", "L2_v", "L2_tot", "MSE_u", "MSE_v", "MSE_tot"])
         print(f"File '{output_file}' created with headings.")
 
 # Append the calculated norms to the CSV file
@@ -99,5 +106,5 @@ with open(output_file, mode='a', newline='') as file:
     writer = csv.writer(file)
     # Uncomment the following if you add pressure tracking later:
     # writer.writerow([timestep, L1_u, L1_v, L1_p, L1_tot, L2_u, L2_v, L2_p, L2_tot])
-    writer.writerow([timestep, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot])
-    print(f"Values [T, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot] appended to error_write.csv")
+    writer.writerow([timestep, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot, MSE_u, MSE_v, MSE_tot])
+    print(f"Values [T, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot, MSE_u, MSE_v, MSE_tot] appended to error_write.csv")
