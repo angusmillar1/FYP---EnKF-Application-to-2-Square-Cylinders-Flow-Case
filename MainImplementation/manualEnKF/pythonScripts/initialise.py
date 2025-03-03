@@ -62,6 +62,7 @@ def remove_files_in_directory(directory):
         file_path = os.path.join(directory, file_name)
         if os.path.isfile(file_path):  # Check if it's a file
             os.remove(file_path)  # Remove the file
+            
 remove_files_in_directory("outputs")
 remove_files_in_directory("outputs/visualisations")
 remove_files_in_directory("outputs/visualisations/animations")

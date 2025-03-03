@@ -32,7 +32,7 @@ devInputPath = "exampleOpenfoamFiles/Mesh1DevICs"
 
 if IC_type == "POD":
     # Read in field statistics data
-    mat = scipy.io.loadmat('inputs/POD_Initialisation_data.mat')  # Load MATLAB data
+    mat = scipy.io.loadmat(f'inputs/podData/Mesh{str(meshNum)}_POD_Initialisation_data.mat')  # Load MATLAB data
 
     # Unpack variables from the .mat file
     Y_mean   = mat['Y_mean']      # Mean flow (size: [N, 1] or [N,])
@@ -436,9 +436,9 @@ Square_down
 // ************************************************************************* //
 """)
 
-def copy_reference_files(ref_destination_dir,randNum):
+def copy_reference_files(ref_destination_dir,randNum,meshNum):
     # Set path to find reference files
-    source_dir = "exampleOpenfoamFiles/Mesh1DevICs"
+    source_dir = f"exampleOpenfoamFiles/Mesh{str(meshNum)}DevICs"
 
     # Copy pressure file
     shutil.copy(source_dir+"/p", ref_destination_dir)
@@ -452,7 +452,13 @@ def copy_reference_files(ref_destination_dir,randNum):
 def main():
     # Initialise random scene selection for reference (and members if used)
     if IC_type == "prev": mem_randNum_set = set()   # Set to avoid duplicate members
-    ref_randNum = random.randint(0,100)             # Select random scene for reference solution
+
+    numScenes = (
+    100 if meshNum == 1 else 
+    62 if meshNum == 2 else 
+    100 if meshNum == 3 else 
+    None)  # Select random scene for reference solution - different number of saved scenes for each mesh    
+    ref_randNum = random.randint(0,numScenes)  
 
     for memIndex in range(1, num_members+1):
         if IC_type == "rand":
@@ -483,11 +489,11 @@ def main():
             u_vectors = np.column_stack((u_vals, v_vals))   # Shape: (num_cells, 2)
             p_values = np.zeros(num_cells)             # Just use zeros for now, should work out
         elif IC_type == "prev":
-            mem_randNum = random.randint(0,100)
+            mem_randNum = random.randint(0,numScenes)
             while mem_randNum == ref_randNum or mem_randNum in mem_randNum_set: mem_randNum = random.randint(0,100)
             mem_randNum_set.add(mem_randNum)
             outputDir = outputPath + "member" + str(memIndex)
-            copy_reference_files(outputDir+"/0/", mem_randNum)
+            copy_reference_files(outputDir+"/0/", mem_randNum, meshNum)
             write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq)
             print(f"Member{memIndex} files written using U{mem_randNum}.")
         else:
@@ -504,7 +510,7 @@ def main():
             print("Files 'U', 'p' and 'controlDict' have been generated.")
 
     # Also do reference solution
-    copy_reference_files(outputPath+"refSoln/0/", ref_randNum)   
+    copy_reference_files(outputPath+"refSoln/0/", ref_randNum, meshNum)   
     write_controlDict_file(outputPath+"refSoln/system/controlDict", init_runtime, file_write_freq)
     print(f"Reference solutions files written using U{ref_randNum}.")
 

@@ -9,16 +9,16 @@ start_whole_timing = time.time()  # Time runtime
 # PREDEFINED INPUTS
 
 # Initial parameters
-mesh_num = 1  # Select the Mesh to use
-file_write_freq = 50  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
+mesh_num = 2  # Select the Mesh to use
+file_write_freq = 25  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion type to use: either random, developed, POD-based, or previous solution
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with ensemble members now, shouldn't ever have to change
 # init_runtime = 5  # Set the time for the members to initially evolve before informing (commented if same as runtime)
 
 # Ensemble and filtering parameters
-num_members = 20    # Set the number of ensemble members
-runtime = 5         # Set the runtime between each EnKF filtering
-prog_endtime = 50   # Set the total run time of the program
+num_members = 2    # Set the number of ensemble members
+runtime = 0.5         # Set the runtime between each EnKF filtering
+prog_endtime = 1.5   # Set the total run time of the program
 
 # Calculated Inputs
 init_runtime = runtime   # Comment if different initial runtime required - unlikely
@@ -38,7 +38,7 @@ subprocess.run([sys.executable, "pythonScripts/initialise.py", str(num_members).
 # Process initial conditions for error calculation
 members_array = [f"memberRunFiles/member{i}/VTK/member{i}_0.vtk" for i in range(1, num_members + 1)] + [exact_soln_path + str(0) + ".vtk"]
 for sample_member in members_array: subprocess.run([sys.executable, "pythonScripts/VTKreadPV.py", sample_member])
-subprocess.run([sys.executable, "pythonScripts/calcError.py", str(0)])
+subprocess.run([sys.executable, "pythonScripts/calcError.py", str(0), str(mesh_num)])
 
 # Run solver for each member for the initial flow evolution/development stage - Uncomment only one 
 print("\nRUNNING INTITIAL EVOLUTION OF MEMBERS\n")
@@ -53,7 +53,7 @@ members_array = [f"memberRunFiles/member{i}/VTK/member{i}_{ref_timestep}.vtk" fo
 for sample_member in members_array: subprocess.run([sys.executable, "pythonScripts/VTKreadPV.py", sample_member])
 
 # Calculate errors
-subprocess.run([sys.executable, "pythonScripts/calcError.py", str(init_runtime)])
+subprocess.run([sys.executable, "pythonScripts/calcError.py", str(init_runtime), str(mesh_num)])
 
 # Start EnKF Loop
 print("------------------------------------------------")
@@ -71,7 +71,7 @@ for loop_num in range(num_loops):
     print(f"\nPROCESSING FIELDS ({loop_num+1}/{num_loops})\n")
     members_array = [f"memberRunFiles/member{i}/VTK/member{i}_{int(round((start_time+runtime)*100))}.vtk" for i in range(1, num_members + 1)] + [exact_soln_path + str(int(round((start_time+runtime)*100))) + ".vtk"]
     for sample_member in members_array: subprocess.run([sys.executable, "pythonScripts/VTKreadPV.py", sample_member])
-    subprocess.run([sys.executable, "pythonScripts/calcError.py", str(start_time+runtime)])
+    subprocess.run([sys.executable, "pythonScripts/calcError.py", str(start_time+runtime), str(mesh_num)])
     start_time += runtime
     end_daploop_timing = time.time()
     print(f"\nEnKF LOOP {loop_num+1}/{num_loops} FINISHED\nEnKF loop {loop_num+1} elapsed time: {end_daploop_timing - start_daploop_timing:.2f} seconds\n")

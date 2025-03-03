@@ -6,6 +6,7 @@ import csv
 
 input_directory = "EnKFMeshData/fullMeshData"
 timestep = float(sys.argv[1])
+meshNum = sys.argv[2]
 # timestep = 10
 
 # Initialize lists to store data for members
@@ -37,7 +38,7 @@ ref_v = ref_data['Uy'].values
 # ref_p = ref_data['p'].values
 
 # Read cell volumes for integration
-cellVols = np.loadtxt("inputs/cellVolumes_mesh1.txt")
+cellVols = np.loadtxt(f"inputs/cellVolumes/cellVolumes_mesh{meshNum}.txt")
 
 print("Computing error norms (L1 and L2)")
 

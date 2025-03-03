@@ -31,7 +31,7 @@ reduction_percentage = 0.1  # Reduce to x% of the original resolution (=1 => 1%)
 #     [8.0, -1.0, 0.0],
 #     [10.0, -1.0, 0.0]
 # ]
-df = pd.read_csv("inputs/measurement_coords.csv")
+df = pd.read_csv("inputs/measurementPoints/measurement_coords.csv")
 custom_coordinates = df[['x', 'y', 'z']].values.tolist()
 
 # Specify whether to plot resolution of reduced mesh or not

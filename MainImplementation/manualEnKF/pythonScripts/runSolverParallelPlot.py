@@ -24,7 +24,7 @@ parent_dir = "memberRunFiles"
 
 # Define the OpenFOAM solver and VTK conversion commands
 solver_command = "bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && SC_pimpleFoam'"
-vtk_command = f"bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && foamToVTK -time {start_time}:{start_time+target_runtime}'"  # Convert all written files (only at current time step to reduce cost)
+vtk_command = f"bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && foamToVTK -time {start_time}:{start_time+target_runtime} -fields \"(U p)\"'"  # Convert all written files (only at current time step to reduce cost)
 # vtk_command = f"bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && foamToVTK -time {target_runtime}'"  # Only at end time
 
 # Collect all member directories

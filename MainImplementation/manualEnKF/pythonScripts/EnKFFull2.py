@@ -136,9 +136,9 @@ P = len(ref_IDs)  # number of measured points per field
 measured_idx_combined = np.concatenate((ref_IDs, ref_IDs + N_full))
 
 # (5) Set measurement noise parameters and construct the combined noise covariance.
-sigma_u, sigma_v = 0.05, 0.025    # standard deviations for Ux and Uy
+sigma_u, sigma_v = 0.05, 0.05    # standard deviations for Ux and Uy
 rho_u, rho_v     = 0.0, 0.0       # assume no cross-point correlation
-inflationFactor  = 1.04           # inflation applied to anomaly matrix to prevent collapse
+inflationFactor  = 1.00           # inflation applied to anomaly matrix to prevent collapse
 
 R_u = generate_R(P, sigma_u, rho_u)
 R_v = generate_R(P, sigma_v, rho_v)

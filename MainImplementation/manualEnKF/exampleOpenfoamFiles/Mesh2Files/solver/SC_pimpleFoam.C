@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     
     scalar Re = 200;
     const int N(U.size()*2); 
-    std::ofstream NonL("U_collection2.txt",std::ios::app);       
+    //std::ofstream NonL("U_collection2.txt",std::ios::app);       
     Eigen::MatrixXd U_primal(Eigen::MatrixXd::Random(N,1));
     Eigen::VectorXd U_vec(N);   
         
@@ -141,8 +141,8 @@ int main(int argc, char *argv[])
             }
         }
         
-        U_vec = volVectorField2VectorXd(U,N);
-        NonL << U_vec << endl;
+        //U_vec = volVectorField2VectorXd(U,N);
+        //NonL << U_vec << endl;
         runTime.write();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
