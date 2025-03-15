@@ -69,10 +69,15 @@ L2_v_dim = np.sqrt(np.sum((err_v**2) * cellVols))
 # L2_tot = np.sqrt(L2_u**2 + L2_v**2)
 
 # Normalise norms by norm of reference solution
-L1_u_ref = (np.sum(np.abs(ref_u)*cellVols))
-L1_v_ref = (np.sum(np.abs(ref_v)*cellVols))
-L2_u_ref = (np.sqrt(np.sum((ref_u ** 2)*cellVols)))
-L2_v_ref = (np.sqrt(np.sum((ref_v ** 2)*cellVols)))
+# L1_u_ref = (np.sum(np.abs(ref_u)*cellVols))
+# L1_v_ref = (np.sum(np.abs(ref_v)*cellVols))
+# L2_u_ref = (np.sqrt(np.sum((ref_u ** 2)*cellVols)))
+# L2_v_ref = (np.sqrt(np.sum((ref_v ** 2)*cellVols)))
+# Instead normalise by characteristic velocity (1)
+L1_u_ref = (np.sum(cellVols))
+L1_v_ref = (np.sum(cellVols))
+L2_u_ref = (np.sqrt(np.sum(cellVols)))
+L2_v_ref = (np.sqrt(np.sum(cellVols)))
 
 L1_u = L1_u_dim / L1_u_ref
 L1_v = L1_v_dim / L1_v_ref

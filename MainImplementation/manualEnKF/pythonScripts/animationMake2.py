@@ -215,6 +215,7 @@ if plotAvg:
     # Generate GIF for the averaged field
     gif_file_avg = os.path.join(gif_dir, "avg_animation.gif")
     generate_gif(image_files_avg, gif_file_avg)
+    shutil.copy(gif_file_avg, "outputs/errorPlots")
     
     
     # ---------------------------
@@ -256,6 +257,7 @@ if plotAvg:
         # Generate GIF for the refSoln
         gif_file_ref = os.path.join(gif_dir, "refSoln_animation.gif")
         generate_gif(image_files_ref, gif_file_ref)
+        shutil.copy(gif_file_ref, "outputs/errorPlots")
 
 
 # Delete all .png files to save storage

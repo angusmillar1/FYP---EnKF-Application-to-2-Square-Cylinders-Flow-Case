@@ -131,7 +131,7 @@ for point in reduced_grid:
     # Find the index of the closest cell in the mesh
     cell_id_temp = vtk.reference(0)
     locator.FindClosestPoint(point, [0.0, 0.0, 0.0], cell_id_temp, vtk.reference(0), vtk.reference(0.0))
-    closest_cell_id = cell_id_temp  # Closest cell ID    
+    closest_cell_id = int(cell_id_temp)  # Closest cell ID    
     cell_ids.append(closest_cell_id)  # Save the cell ID
 
     # Retrieve the cell using the cell ID
@@ -153,6 +153,38 @@ for point in reduced_grid:
     extracted_points.append(centroid)
 
 extracted_points = np.array(extracted_points)
+
+# Detect duplicated cell IDs (i.e., multiple points mapping to the same cell)
+duplicate_indices = []
+cell_id_to_indices = {}  # Dictionary: cell_id -> list of indices in cell_ids
+
+for i, c_id in enumerate(cell_ids):
+    if c_id not in cell_id_to_indices:
+        cell_id_to_indices[c_id] = [i]
+    else:
+        cell_id_to_indices[c_id].append(i)
+
+# Identify and report cells with duplicates
+for c_id, indices in cell_id_to_indices.items():
+    if len(indices) > 1:
+        print(f"Warning: Multiple input points {indices} mapped to cell {c_id}.")
+        # We'll remove all but the first occurrence
+        duplicate_indices.extend(indices[1:])
+
+# If duplicates exist, remove them from cell_ids, extracted_points, and reduced_grid
+if duplicate_indices:
+    print("Removing repeated instances so they appear only once in final output.")
+    duplicate_indices = sorted(set(duplicate_indices), reverse=True)
+    
+    # Convert cell_ids to a list so we can pop easily
+    cell_ids_list = list(cell_ids)
+    
+    for idx in duplicate_indices:
+        cell_ids_list.pop(idx)
+        extracted_points = np.delete(extracted_points, idx, axis=0)
+        reduced_grid = np.delete(reduced_grid, idx, axis=0)
+
+    cell_ids = cell_ids_list
 
 # Sort reduced mesh cell IDs for niceness later on
 cell_ids = sorted(cell_ids)

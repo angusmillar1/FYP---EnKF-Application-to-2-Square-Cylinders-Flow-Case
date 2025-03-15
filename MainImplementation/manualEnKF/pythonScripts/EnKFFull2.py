@@ -56,6 +56,7 @@ def enkf_update_full_field_combined(ens, y, measured_idx, R, infl):
     
     # (b) Form the perturbed observations for each ensemble member.
     Y = np.tile(y, (N_e, 1)).T + eps   # shape (2P, N_e)
+    # print(y,Y)
     
     # (c) Compute the full–state ensemble mean and anomalies.
     x_mean = np.mean(ens, axis=1)               # shape (2N,)

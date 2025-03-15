@@ -17,18 +17,23 @@ if len(sys.argv) > 1 and sys.argv[1]:
     # Inherited inputs if calling from Allrun.py 
     num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
     assimInt = float(sys.argv[2])   # Get assimilation interval for plotting of vert lines
+    # Plot everything when run in big sim
+    wholeFieldOn = 1
+    probePlotOn = 1
+    plotAssimInt = 1
+    printProgress = 1
 else:
     # Equivalent inherited inputs if running independtly
-    num_members = 20    # Manually set number of members for spread plot
-    assimInt = 5       # Manually set assimilation interval for plotting of vert lines
+    num_members = 15    # Manually set number of members for spread plot
+    assimInt = 10       # Manually set assimilation interval for plotting of vert lines
 
 # Other plotting inputs
-probeNum = [1,2,27] # Choose probe points to plot for
+probeNum = [0,1,2,7,13] # Choose probe points to plot for
 
 if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [0,65] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 
 
