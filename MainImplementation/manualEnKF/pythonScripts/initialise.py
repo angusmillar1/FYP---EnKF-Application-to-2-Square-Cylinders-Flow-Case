@@ -113,7 +113,7 @@ for root, dirs, files in os.walk(member_directory):
         if pattern.match(directory) or directory=="refSoln":
             # Construct the full path to the subdirectory
             subdirectory_path = os.path.join(root, directory)
-            print(subdirectory_path)
+            # print(subdirectory_path)
 
             # Change to the subdirectory
             print(f"Processing directory: {subdirectory_path}")

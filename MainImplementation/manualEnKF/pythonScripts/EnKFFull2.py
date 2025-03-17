@@ -50,6 +50,7 @@ def enkf_update_full_field_combined(ens, y, measured_idx, R, infl):
     """
     N_full, N_e = ens.shape
     P = len(measured_idx)
+    print(f"2N={N_full}, Ne={N_e}, P={P}")
     
     # (a) Generate measurement error perturbations in measurement space.
     eps = generate_perturbations_cholesky(R, N_e)  # shape (2P, N_e)

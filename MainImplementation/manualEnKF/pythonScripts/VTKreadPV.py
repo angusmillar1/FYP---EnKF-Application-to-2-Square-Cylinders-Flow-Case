@@ -30,7 +30,11 @@ else:
     output_filename = "refSoln"  # Exact solution
 
 # Load the VTK mesh file
-mesh = pv.read(vtk_file_path)
+try:
+    mesh = pv.read(vtk_file_path)
+except FileNotFoundError:
+    print(f"File not found: {vtk_file_path}")
+    sys.exit(1)  # Exit with non-zero code
 num_cells = mesh.n_cells
 
 if timestep != 0:

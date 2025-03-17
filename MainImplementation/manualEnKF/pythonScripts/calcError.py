@@ -114,3 +114,8 @@ with open(output_file, mode='a', newline='') as file:
     # writer.writerow([timestep, L1_u, L1_v, L1_p, L1_tot, L2_u, L2_v, L2_p, L2_tot])
     writer.writerow([timestep, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot, MSE_u, MSE_v, MSE_tot])
     print(f"Values [T, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot, MSE_u, MSE_v, MSE_tot] appended to error_write.csv")
+
+# Check for divergence
+if L1_tot > 1000000:
+    print("!!! DIVERGENCE DETECTED - EXITING LOOP !!!")
+    sys.exit(1)  # Exit with non-zero code

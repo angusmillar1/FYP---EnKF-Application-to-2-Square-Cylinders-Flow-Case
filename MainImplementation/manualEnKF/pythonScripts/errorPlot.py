@@ -33,7 +33,7 @@ probeNum = [0,1,2,7,13] # Choose probe points to plot for
 if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [0,65] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [0,42] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 
 
