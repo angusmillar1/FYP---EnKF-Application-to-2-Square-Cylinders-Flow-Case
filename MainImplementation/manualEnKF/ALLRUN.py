@@ -16,9 +16,9 @@ exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with
 # init_runtime = 5  # Set the time for the members to initially evolve before informing (commented if same as runtime)
 
 # Ensemble and filtering parameters
-num_members = 15     # Set the number of ensemble members
-runtime = 10         # Set the runtime between each EnKF filtering
-prog_endtime = 100   # Set the total run time of the program
+num_members = 2     # Set the number of ensemble members
+runtime = 5         # Set the runtime between each EnKF filtering
+prog_endtime = 105   # Set the total run time of the program
 
 # Calculated Inputs
 init_runtime = runtime   # Comment if different initial runtime required - unlikely
@@ -61,14 +61,14 @@ print("\nSTARTING EnKF LOOP\n")
 print("------------------------------------------------")
 start_time = init_runtime
 for loop_num in range(num_loops):
-    print(f"\nEnKF LOOP {loop_num+1}/{num_loops}\n")
+    print(f"\nEnKF LOOP {loop_num+2}/{num_loops+1}\n")
     start_daploop_timing = time.time()
     subprocess.run([sys.executable, "pythonScripts/EnKFFull2.py"])
     print("\nWRITING NEW SOURCE FILES\n")
     subprocess.run([sys.executable, "pythonScripts/genNewICs.py", str(num_members), str(mesh_num), str(runtime), str(file_write_freq), str(start_time)])
     print("\nRUNNNING OPENFOAM CASES\n")
     subprocess.run([sys.executable, "pythonScripts/runSolverParallelPlot.py", str(start_time+runtime), str(start_time), str(prog_endtime)])  # Run multiple parallel members with progress plot
-    print(f"\nPROCESSING FIELDS ({loop_num+1}/{num_loops})\n")
+    print(f"\nPROCESSING FIELDS ({loop_num+2}/{num_loops+1})\n")
     members_array = [f"memberRunFiles/member{i}/VTK/member{i}_{int(round((start_time+runtime)*100))}.vtk" for i in range(1, num_members + 1)] + [exact_soln_path + str(int(round((start_time+runtime)*100))) + ".vtk"]
     for sample_member in members_array: 
         result1 = subprocess.run([sys.executable, "pythonScripts/VTKreadPV.py", sample_member], capture_output=True, text=True)
@@ -77,7 +77,7 @@ for loop_num in range(num_loops):
     if result2.returncode != 0: break
     start_time += runtime
     end_daploop_timing = time.time()
-    print(f"\nEnKF LOOP {loop_num+1}/{num_loops} FINISHED\nEnKF loop {loop_num+1} elapsed time: {end_daploop_timing - start_daploop_timing:.2f} seconds\n")
+    print(f"\nEnKF LOOP {loop_num+2}/{num_loops+1} FINISHED\nEnKF loop {loop_num+1} elapsed time: {((end_daploop_timing - start_daploop_timing)/60):.2f} minutes\n")
 
 print("\nSTARTING FINAL PROCESSING\n")
 
@@ -101,6 +101,6 @@ subprocess.run("echo 'The run has finished!' | mail -s 'Job Done' acm21@ic.ac.uk
 
 # Time runtime 
 end_whole_timing = time.time()
-print(f"Whole program elapsed time: {end_whole_timing - start_whole_timing:.2f} seconds")
+print(f"Whole program elapsed time: {((end_whole_timing - start_whole_timing)/3600):.2f} hours")
 
 print("---------- END ----------")

@@ -57,7 +57,7 @@ def monitor_logs():
                             clock_time_match = re.search(r"ClockTime = ([\d\.]+) s", line)
                             if clock_time_match:
                                 member1_clock_time = float(clock_time_match.group(1))
-        time.sleep(2)  # Check for updates every 2 seconds
+        time.sleep(10)  # Check for updates every 2 seconds
 
 # Function to plot data in real-time as a bar chart
 def live_plot():
@@ -103,7 +103,7 @@ def live_plot():
         ax.grid(axis="y", linestyle="--", alpha=0.7)
         plt.ylim(0,prog_endtime*1.1)
 
-        plt.pause(2)  # Update the plot every 2 seconds
+        plt.pause(10)  # Update the plot every 2 seconds
 
 
 # Start monitoring and plotting in parallel threads
