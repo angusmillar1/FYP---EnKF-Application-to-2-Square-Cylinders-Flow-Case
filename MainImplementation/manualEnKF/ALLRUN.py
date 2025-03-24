@@ -10,20 +10,21 @@ start_whole_timing = time.time()  # Time runtime
 
 # Initial parameters
 mesh_num = 2  # Select the Mesh to use
-file_write_freq = 100  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
+file_write_freq = 250  # Frequency at which to write out data, assuming deltaT=0.01 (100=>T=1)
 IC_type = "POD"  # "rand" / "dev" / "POD" / "prev". Define initial conditiion type to use: either random, developed, POD-based, or previous solution
 exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with ensemble members now, shouldn't ever have to change
 # init_runtime = 5  # Set the time for the members to initially evolve before informing (commented if same as runtime)
 
 # Ensemble and filtering parameters
 num_members = 2     # Set the number of ensemble members
-runtime = 5         # Set the runtime between each EnKF filtering
-prog_endtime = 105   # Set the total run time of the program
+runtime = 25         # Set the runtime between each EnKF filtering
+prog_endtime = 250   # Set the total run time of the program
 
 # Calculated Inputs
 init_runtime = runtime   # Comment if different initial runtime required - unlikely
 num_loops = (prog_endtime - init_runtime)/runtime   # Determine the number of EnKF filter-run loops
-if int(num_loops) != num_loops: print("WARNING - INVALID NUMBER OF LOOPS")
+if int(num_loops) != num_loops: print("\n !!!!! WARNING - INVALID NUMBER OF LOOPS !!!!! \n")
+if int((runtime*100)/file_write_freq) != ((runtime*100)/file_write_freq): print("\n !!!!! WARNING - WRITE FREQUENCY MUST DIVIDE RUN TIME !!!!! \n")
 num_loops = int(num_loops)
 
 
@@ -77,7 +78,7 @@ for loop_num in range(num_loops):
     if result2.returncode != 0: break
     start_time += runtime
     end_daploop_timing = time.time()
-    print(f"\nEnKF LOOP {loop_num+2}/{num_loops+1} FINISHED\nEnKF loop {loop_num+1} elapsed time: {((end_daploop_timing - start_daploop_timing)/60):.2f} minutes\n")
+    print(f"\nEnKF LOOP {loop_num+2}/{num_loops+1} FINISHED\nEnKF loop {loop_num+2} elapsed time: {((end_daploop_timing - start_daploop_timing)/60):.2f} minutes\n")
 
 print("\nSTARTING FINAL PROCESSING\n")
 

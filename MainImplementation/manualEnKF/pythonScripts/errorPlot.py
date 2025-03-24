@@ -8,8 +8,9 @@ import numpy as np
 import sys
 
 # CHOOSE WHAT TO PLOT
-wholeFieldOn = 1
+wholeFieldOn = 0
 probePlotOn = 1
+plotAvgVar = 1
 plotAssimInt = 1
 printProgress = 1
 
@@ -20,20 +21,21 @@ if len(sys.argv) > 1 and sys.argv[1]:
     # Plot everything when run in big sim
     wholeFieldOn = 1
     probePlotOn = 1
+    plotAvgVar = 1
     plotAssimInt = 1
-    printProgress = 1
+    printProgress = 0
 else:
     # Equivalent inherited inputs if running independtly
-    num_members = 15    # Manually set number of members for spread plot
-    assimInt = 5       # Manually set assimilation interval for plotting of vert lines
+    num_members = 2    # Manually set number of members for spread plot
+    assimInt = 25       # Manually set assimilation interval for plotting of vert lines
 
 # Other plotting inputs
-probeNum = [0,1,2,7,13] # Choose probe points to plot for
+probeNum = [0,1,2,16] # Choose probe points to plot for
 
 if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [0,35] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 
 
@@ -386,3 +388,47 @@ if probePlotOn:
         while timepkg.time() - start_plot_timer < 2:
             plt.pause(0.1)
         plt.close()
+
+if plotAvgVar:
+    if printProgress: print("Starting spread analysis")
+    # --- Compute and plot the average variance for u and v separately ---
+
+    # 1) Compute per-timestep variance over the ensemble (axis 0) for each probe point.
+    #    u_var and v_var have shape (num_timesteps, num_probe_points)
+    u_var = np.var(u_ensemble, axis=0)
+    v_var = np.var(v_ensemble, axis=0)
+
+    # 2) Average the variance over all probe points for each timestep.
+    #    This results in one average variance value per timestep for u and v.
+    average_u_variance = np.mean(u_var, axis=1)
+    average_v_variance = np.mean(v_var, axis=1)
+    combined_average_variance = (average_u_variance + average_v_variance) / 2
+
+    # 3) Plot the average variances for u and v on the same figure for comparison.
+    plt.figure(figsize=(10, 5))
+    plt.plot(time, average_u_variance, label='Average u Variance', color='C0')
+    plt.plot(time, average_v_variance, label='Average v Variance', color='C1')
+    plt.plot(time, combined_average_variance, label='Combined Average Variance', color='C2', linestyle='--')
+    plt.xlabel("Time")
+    plt.ylabel("Average Variance")
+    plt.title("Ensemble Average Variance for u and v Components")
+    plt.grid(True)
+    plt.legend(loc="best")
+
+    if plotAssimInt:
+        # Use MultipleLocator for vertical lines every few time units
+        ax = plt.gca()  # Get current axes
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
+        ax.grid(which='major', axis='x', linestyle='--', color='black')  
+
+    plt.tight_layout()
+
+    if not timeWindow: output_plot_path_avgvar = output_path + "average_variance.png"
+    else: output_plot_path_avgvar = output_path+f"average_variance_windowed_{t_min}_{t_max}.png"
+
+    plt.savefig(output_plot_path_avgvar, dpi=300)
+    plt.show(block=False)
+    start_plot_timer = timepkg.time()
+    while timepkg.time() - start_plot_timer < 2:
+        plt.pause(0.1)
+    plt.close()
