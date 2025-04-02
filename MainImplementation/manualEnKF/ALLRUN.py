@@ -16,15 +16,15 @@ exact_soln_path = "memberRunFiles/refSoln/VTK/refSoln_"  # Runs in parallel with
 # init_runtime = 5  # Set the time for the members to initially evolve before informing (commented if same as runtime)
 
 # Ensemble and filtering parameters
-num_members = 2     # Set the number of ensemble members
+num_members = 20     # Set the number of ensemble members
 runtime = 25         # Set the runtime between each EnKF filtering
 prog_endtime = 250   # Set the total run time of the program
 
 # Calculated Inputs
 init_runtime = runtime   # Comment if different initial runtime required - unlikely
 num_loops = (prog_endtime - init_runtime)/runtime   # Determine the number of EnKF filter-run loops
-if int(num_loops) != num_loops: print("\n !!!!! WARNING - INVALID NUMBER OF LOOPS !!!!! \n")
-if int((runtime*100)/file_write_freq) != ((runtime*100)/file_write_freq): print("\n !!!!! WARNING - WRITE FREQUENCY MUST DIVIDE RUN TIME !!!!! \n")
+if int(num_loops) != num_loops: print("\n !!!!! WARNING - INVALID NUMBER OF LOOPS !!!!! \n"); sys.exit()
+if int((runtime*100)/file_write_freq) != ((runtime*100)/file_write_freq): print("\n !!!!! WARNING - WRITE FREQUENCY MUST DIVIDE RUN TIME !!!!! \n"); sys.exit()
 num_loops = int(num_loops)
 
 

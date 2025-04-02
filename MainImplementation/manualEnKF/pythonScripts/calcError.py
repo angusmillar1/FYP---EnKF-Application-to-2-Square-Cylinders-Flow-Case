@@ -117,5 +117,5 @@ with open(output_file, mode='a', newline='') as file:
 
 # Check for divergence
 if L1_tot > 1000000:
-    print("!!! DIVERGENCE DETECTED - EXITING LOOP !!!")
+    print("\n!!!!! DIVERGENCE DETECTED - EXITING LOOP !!!!!\n")
     sys.exit(1)  # Exit with non-zero code
