@@ -27,16 +27,16 @@ if len(sys.argv) > 1 and sys.argv[1]:
     printProgress = 0
 else:
     # Equivalent inherited inputs if running independtly
-    num_members = 20    # Manually set number of members for spread plot
+    num_members = 5    # Manually set number of members for spread plot
     assimInt = 25       # Manually set assimilation interval for plotting of vert lines
 
 # Other plotting inputs
-probeNum = [0] # Choose probe points to plot for
+probeNum = [0,2,16] # Choose probe points to plot for
 
 if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [0,150] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 
 
@@ -383,6 +383,8 @@ if probePlotOn:
         plt.close()
 
 
+# SPREAD TRACKING AND QUANTIFICATION
+
 def exponential_window_fit(x, y, assimInt, num_points=100, skip_first=False, fixed_lambda=None):
     """
     Perform exponential fits on windows of data that reset every 'assimInt'.
@@ -481,7 +483,6 @@ def exponential_window_fit(x, y, assimInt, num_points=100, skip_first=False, fix
         })
     
     return fit_results
-
 
 def collapse_rate_regression(fit_results):
     """
@@ -589,11 +590,11 @@ if plotAvgVar:
     plt.figure(figsize=(10, 6))
     plt.plot(time, combined_average_variance, 'o', label='Data', markersize=3)
     for fit in fits:
-        plt.plot(fit['x_fit'], fit['y_fit'], '--', 
-                 label=f"Fit {fit['window_start']:.0f}-{fit['window_end']:.0f} (λ={fit['lambda_fit']:.3f})")
+        plt.plot(fit['x_fit'], fit['y_fit'], '--')#, 
+                 #label=f"Fit {fit['window_start']:.0f}-{fit['window_end']:.0f} (λ={fit['lambda_fit']:.3f})")
     
     # Create a smooth curve for the collapse rate regression: B*exp(-mu*t)
-    t_reg = np.linspace(t_vals.min(), t_vals.max(), 200)
+    t_reg = np.linspace(0, t_vals.max(), 200)
     y_reg = B_est * np.exp(-mu_est * t_reg)
     plt.plot(t_reg, y_reg, 'k-', linewidth=2, label=f"Collapse Fit (μ={mu_est:.3f})")
     # Highlight the pivot points (end-of-window values) used in the collapse regression
