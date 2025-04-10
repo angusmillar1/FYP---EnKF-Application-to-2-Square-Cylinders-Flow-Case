@@ -8,6 +8,12 @@ import time
 import pandas as pd
 import numpy as np
 import sys
+import csv
+import matplotlib.pyplot as plt
+from matplotlib.tri import Triangulation
+from matplotlib.lines import Line2D
+import matplotlib.patches as patches  # For adding patch shapes
+import time as timepkg
 
 if len(sys.argv) > 1 and sys.argv[1]:
     assimInt = float(sys.argv[1])       # Automatically inherit values if run from ALLRUN
@@ -22,8 +28,8 @@ plotAll = 0
 plotAvg = 1
 plotVarT = 0       # New flag for variance visualisations
 plotRMS = 1
-makePNGSandGIFS = 0
-cleanpngs = 0
+makePNGSandGIFS = 1
+cleanpngs = 1
 cleanvtks = 0
 
 start_timing = time.time()
@@ -97,6 +103,7 @@ def generate_gif(image_files, output_gif):
     )
     print(f"Generated GIF: {output_gif}")
 
+# Function to calculate fluctuating fields
 def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_filename, time_interval, remove_original=True):
     """
     Process a set of assimilation VTK files (named like "ensavg_{t}.vtk") that have timesteps which are
@@ -189,8 +196,8 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
     global_uv = uv_global_sum / N  # global time-averaged u′v′ field
     global_v2 = v2_global_sum / N  # global time-averaged v′² field
     
-    # 4. Ensure the output directory exists.
-    os.makedirs(output_dir, exist_ok=True)
+    # # 4. Ensure the output directory exists.
+    # os.makedirs(output_dir, exist_ok=True)
     
     # 5. Pass 3: Process each file individually.
     for fname in selected_files:
@@ -227,11 +234,53 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
         
         # Extract the timestep identifier from the filename.
         base = os.path.basename(fname)
-        t_str = base.replace("ensavg_", "").replace(".vtk", "")
+        t_str = base.split('_')[-1].replace(".vtk", "")
         
         # Save the new VTK file as "ensfluct_{t}.vtk" in the output directory.
         output_file = os.path.join(output_dir, f"{output_filename}_{t_str}.vtk")
         vtk_obj.save(output_file)
+
+# Function to quantify difference between fluctuating fields
+def compute_error_metrics(ensemble_field, reference_field, cellVols):
+    """
+    Given two numpy arrays (ensemble vs. reference), compute:
+      - L1 norm : sum of absolute errors
+      - L2 norm : sqrt(sum(error**2))
+      - MSE     : mean squared error
+      - RMSE    : square root of MSE
+    Returns a tuple (L1, L2, MSE, RMSE).
+    """
+    diff = ensemble_field - reference_field
+    # Assume diff and cellVols are defined and have the same shape.
+    total_area = np.sum(cellVols)
+
+    # Normalized L1 norm:
+    L1 = np.sum(np.abs(diff) * cellVols) / total_area
+
+    # Normalized L2 norm:
+    L2 = np.sqrt(np.sum(diff**2 * cellVols) / total_area)
+
+    # Normalized Mean Squared Error:
+    mse = np.sum(diff**2 * cellVols) / total_area
+
+    # Normalized Root Mean Squared Error:
+    rmse = np.sqrt(mse)
+    return L1, L2, mse, rmse
+
+# Helper function that returns a triangulation based on the data
+def get_triangulation(vtk_obj, field_array):
+    """
+    If the field array length matches the number of points, use the mesh points.
+    Otherwise, assume the field is defined on cells and use cell center coordinates.
+    Returns the Triangulation, and the x and y coordinate arrays.
+    """
+    if len(field_array) == vtk_obj.points.shape[0]:
+        pts = vtk_obj.points
+    else:
+        pts = vtk_obj.cell_centers().points
+    x = pts[:, 0]
+    y = pts[:, 1]
+    return Triangulation(x, y), x, y
 
 if plotAll:
     for group, files in grouped_files.items():
@@ -371,6 +420,8 @@ if plotAvg:
     image_files_ref = []
     if "refSoln" in grouped_files:
         for file in grouped_files["refSoln"]:
+            timestep = Path(file).stem.split("_")[-1]
+            print(f"{int(int(timestep)/writeFreq)}/{totalRuntime}")
             vtk_object = pv.read(file)
             vtk_object["Ux"] = vtk_object["U"][:, 0]
             vtk_object["Uy"] = vtk_object["U"][:, 1]
@@ -382,7 +433,7 @@ if plotAvg:
             if "cellID" in vtk_object.cell_data: vtk_object.cell_data.remove("cellID")
 
             # SAVE THE AVERAGE FIELDS AT EACH TIMESTEP TO avgvtk_dir titled ensavg_{t}.vtk
-            output_file = os.path.join(vtk_dir, f"refavg_{t}.vtk")
+            output_file = os.path.join(vtk_dir, f"refavg_{timestep}.vtk")
             vtk_object.save(output_file)
 
             if not makePNGSandGIFS: continue
@@ -400,7 +451,6 @@ if plotAvg:
             plotter.camera.parallel_scale = 7
             add_points(plotter, points_to_add)
     
-            timestep = Path(file).stem.split("_")[-1]
             image_file = os.path.join(output_dir, f"refSoln_{timestep}.png")
             plotter.screenshot(image_file)
             image_files_ref.append(image_file)
@@ -517,6 +567,7 @@ if plotVarT:
     shutil.copy(gif_file_vv, "outputs/errorPlots")
 
 if plotRMS:
+    # Call function to compute rms values
     print("Computing ensemble r.m.s.")
     compute_uv_fluctuations(
         file_pattern=os.path.join(vtk_dir,"ensavg_*.vtk"),
@@ -527,7 +578,6 @@ if plotRMS:
         time_interval=writeFreq*assimInt,
         remove_original=False
     )
-
     print("Computing reference r.m.s.")
     compute_uv_fluctuations(
         file_pattern=os.path.join(vtk_dir,"refavg_*.vtk"),
@@ -538,6 +588,133 @@ if plotRMS:
         time_interval=writeFreq*assimInt,
         remove_original=False
     )
+
+    # print("Calculating comparison metrics")
+    # Calculate single value norms and write to a .csv
+    # Define the file patterns (modify the directories as needed)
+    ens_pattern = os.path.join(vtk_dir, "ensfluct_*.vtk")
+    reff_pattern = os.path.join(vtk_dir, "reffluct_*.vtk")
+
+    # Gather the file lists, using the first file from each as they contain the desired fields.
+    ens_files = sorted(glob.glob(ens_pattern))
+    reff_files = sorted(glob.glob(reff_pattern))
+
+    if len(ens_files) == 0:
+        raise ValueError("No ensemble files found matching pattern: " + ens_pattern)
+    if len(reff_files) == 0:
+        raise ValueError("No reference files found matching pattern: " + reff_pattern)
+
+    # Use the first ensemble file and the first reference file.
+    ens_file = ens_files[0]
+    reff_file = reff_files[0]
+
+    # Read the VTK files.
+    ens_vtk = pv.read(ens_file)
+    reff_vtk = pv.read(reff_file)
+
+    # Extract the three global moment fields from each file.
+    # These fields are assumed to be stored as point data arrays.
+    ens_global_u2 = np.array(ens_vtk["global_u2"])
+    ens_global_uv = np.array(ens_vtk["global_uv"])
+    ens_global_v2 = np.array(ens_vtk["global_v2"])
+
+    reff_global_u2 = np.array(reff_vtk["global_u2"])
+    reff_global_uv = np.array(reff_vtk["global_uv"])
+    reff_global_v2 = np.array(reff_vtk["global_v2"])
+
+    # Read in the cell volumes (used for normalisation)
+    cellVols = np.loadtxt("inputs/cellVolumes/cellVolumes_mesh2.txt")
+
+    # Compute error metrics for each moment field.
+    L1_u2, L2_u2, mse_u2, rmse_u2 = compute_error_metrics(ens_global_u2, reff_global_u2, cellVols)
+    L1_uv, L2_uv, mse_uv, rmse_uv = compute_error_metrics(ens_global_uv, reff_global_uv, cellVols)
+    L1_v2, L2_v2, mse_v2, rmse_v2 = compute_error_metrics(ens_global_v2, reff_global_v2, cellVols)
+
+    # Write the metrics to a CSV file.
+    # The CSV will have one header row ("Metric", "global_u2", "global_uv", "global_v2") and 4 rows:
+    # one each for L1, L2, MSE, and RMSE.
+    csv_filename = "outputs/errorPlots/fluct_error_metrics.csv"
+    with open(csv_filename, mode="w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["Metric", "global_u2", "global_uv", "global_v2"])
+        writer.writerow(["L1", L1_u2, L1_uv, L1_v2])
+        writer.writerow(["L2", L2_u2, L2_uv, L2_v2])
+        writer.writerow(["MSE", mse_u2, mse_uv, mse_v2])
+        writer.writerow(["RMSE", rmse_u2, rmse_uv, rmse_v2])
+
+    print("Error metrics successfully saved to", csv_filename)
+
+
+    # Plot contours
+    print("Starting contour plots")
+    # Define the moment fields to plot along with their descriptive labels.
+    fields = ["global_u2", "global_uv", "global_v2"]
+    field_labels = {
+        "global_u2": "Global u'²",
+        "global_uv": "Global u'v'",
+        "global_v2": "Global v'²"
+    }
+
+    # Loop over each field and produce a plot that overlays both ensemble and reference contours.
+    for field in fields:
+        # Retrieve the ensemble and reference field arrays.
+        ens_field = np.array(ens_vtk[field])
+        reff_field = np.array(reff_vtk[field])
+        
+        # Get the triangulation based on the ensemble VTK object and its field array.
+        triang, x, y = get_triangulation(ens_vtk, ens_field)
+        
+        # Determine a common range and contour levels based on the two arrays.
+        field_min = min(ens_field.min(), reff_field.min())
+        field_max = max(ens_field.max(), reff_field.max())
+        levels = np.linspace(field_min, field_max, 8)  # Adjust the number of levels as needed.
+        
+        # Create a new figure.
+        plt.figure(figsize=(16, 9))
+        
+        # Create a filled contour using the ensemble field as background.
+        cf = plt.tricontourf(triang, ens_field, levels=levels, cmap='viridis', alpha=0.6)
+        
+        # Overlay the ensemble contours in solid blue lines.
+        cs_ens = plt.tricontour(triang, ens_field, levels=levels, colors='blue', linestyles='solid', linewidths=1.5)
+        plt.clabel(cs_ens, inline=True, fontsize=8, fmt='%1.2f')
+        
+        # Overlay the reference contours in dashed red lines.
+        cs_reff = plt.tricontour(triang, reff_field, levels=levels, colors='red', linestyles='dashed', linewidths=1.5)
+        plt.clabel(cs_reff, inline=True, fontsize=8, fmt='%1.2f')
+        
+        # Title, labels, and colorbar.
+        plt.title(f"Contour Comparison: {field_labels[field]}")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.colorbar(cf, label=field_labels[field])
+        
+        # Create custom legend handles for ensemble (solid blue) and reference (dashed red)
+        legend_handles = [
+            Line2D([0], [0], color='blue', lw=1.5, linestyle='solid'),
+            Line2D([0], [0], color='red', lw=1.5, linestyle='dashed')
+        ]
+        plt.legend(legend_handles, ['Ensemble (solid)', 'Reference (dashed)'], loc='best')
+
+        # --- Add grey squares of side 1 centered at (0,1) and (0,-1) ---
+        ax = plt.gca()
+        square1 = patches.Rectangle((-0.5, 0.5), 1, 1, facecolor='black', edgecolor='none', alpha=0.8)
+        square2 = patches.Rectangle((-0.5, -1.5), 1, 1, facecolor='black', edgecolor='none', alpha=0.8)
+        ax.add_patch(square1)
+        ax.add_patch(square2)
+        
+        plt.axis('equal')
+        ax.set_xlim([-2, 32])
+        ax.set_ylim([-12, 12])
+        plt.tight_layout()
+        
+        output_plot_path = f"outputs/errorPlots/{field}.png"
+        plt.savefig(output_plot_path, dpi=300)
+        plt.show(block=False)
+        start_plot_timer = timepkg.time()
+        while timepkg.time() - start_plot_timer < 5:
+            plt.pause(0.1)
+        plt.close()
 
 
 # Delete all .png files to save storage
