@@ -9,7 +9,7 @@ import sys
 from scipy.stats import linregress
 
 # CHOOSE WHAT TO PLOT
-wholeFieldOn = 0
+wholeFieldOn = 1
 probePlotOn = 1
 plotAvgVar = 1
 plotAssimInt = 1
