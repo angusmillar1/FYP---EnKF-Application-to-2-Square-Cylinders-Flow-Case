@@ -116,6 +116,6 @@ with open(output_file, mode='a', newline='') as file:
     print(f"Values [T, L1_u, L1_v, L1_tot, L2_u, L2_v, L2_tot, MSE_u, MSE_v, MSE_tot] appended to error_write.csv")
 
 # Check for divergence
-if L1_tot > 1000000:
+if L1_tot > 100:
     print("\n!!!!! DIVERGENCE DETECTED - EXITING LOOP !!!!!\n")
     sys.exit(1)  # Exit with non-zero code

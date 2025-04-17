@@ -346,7 +346,7 @@ if plotAvg:
     
     image_files_avg = []
     for t in timesteps_sorted:
-        print(f"{int(int(t)/writeFreq)}/{totalRuntime}")
+        # print(f"{int(int(t)/writeFreq)}/{totalRuntime}")
         files_t = member_files_by_timestep[t]
         sum_array_Ux = None
         sum_array_Uy = None
@@ -421,7 +421,7 @@ if plotAvg:
     if "refSoln" in grouped_files:
         for file in grouped_files["refSoln"]:
             timestep = Path(file).stem.split("_")[-1]
-            print(f"{int(int(timestep)/writeFreq)}/{totalRuntime}")
+            # print(f"{int(int(timestep)/writeFreq)}/{totalRuntime}")
             vtk_object = pv.read(file)
             vtk_object["Ux"] = vtk_object["U"][:, 0]
             vtk_object["Uy"] = vtk_object["U"][:, 1]
@@ -712,7 +712,7 @@ if plotRMS:
         plt.savefig(output_plot_path, dpi=300)
         plt.show(block=False)
         start_plot_timer = timepkg.time()
-        while timepkg.time() - start_plot_timer < 5:
+        while timepkg.time() - start_plot_timer < 2:
             plt.pause(0.1)
         plt.close()
 

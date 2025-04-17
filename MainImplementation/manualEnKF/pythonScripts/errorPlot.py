@@ -27,16 +27,16 @@ if len(sys.argv) > 1 and sys.argv[1]:
     printProgress = 0
 else:
     # Equivalent inherited inputs if running independtly
-    num_members = 5    # Manually set number of members for spread plot
-    assimInt = 25       # Manually set assimilation interval for plotting of vert lines
+    num_members = 10    # Manually set number of members for spread plot
+    assimInt = 10       # Manually set assimilation interval for plotting of vert lines
 
 # Other plotting inputs
-probeNum = [0,2,16] # Choose probe points to plot for
+probeNum = [0] # Choose probe points to plot for
 
 if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [0,140] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
 
 
 

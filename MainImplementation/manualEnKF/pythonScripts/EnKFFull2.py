@@ -27,7 +27,22 @@ def generate_perturbations_cholesky(R, P):
         epsilons[:, i] = L @ z
     return epsilons
 
-def enkf_update_full_field_combined(ens, y, measured_idx, R, infl):
+def compute_localization_weights(state_positions, meas_positions, L):
+    """ Compute a weight matrix based on the Euclidean distance between state and measurement positions.
+    Parameters
+        state_positions : ndarray, shape (n, 2) - x-y positions of the full state cells.
+        meas_positions : ndarray, shape (m, 2) - x-y positions of the measurement cells.
+        L : float - Localization length scale.
+    Returns:
+        W : ndarray, shape (n, m) - Localization weight matrix where each entry is exp[-0.5*(d(i,j)/L)^2]. """
+
+    # Compute a pairwise distance matrix (n x m)
+    dists = np.linalg.norm(state_positions[:, None, :] - meas_positions[None, :, :], axis=2)
+    W = np.exp(-0.5 * (dists / L)**2)
+    return W
+
+
+def enkf_update_full_field_combined(ens, y, measured_idx, R, infl, W):
     """
     Perform an EnKF update for the full combined state vector.
     
@@ -71,9 +86,20 @@ def enkf_update_full_field_combined(ens, y, measured_idx, R, infl):
     
     # (f) Compute the cross-covariance between full state and measurement space.
     P_xy = (1.0/(N_e - 1)) * (X_ano @ S.T)       # shape (2N, 2P)
+
+    # (f.1) If you have the localization weights, multiply element–wise.
+    # For this example, assume you have computed W_combined with shape (2N, 2P)
+    P_xy_localised = P_xy * W
     
     # (g) Compute the Kalman gain.
-    K = P_xy @ np.linalg.inv(cov_yy)             # shape (2N, 2P)
+    # Non-localized gain
+    K_nonloc = P_xy @ np.linalg.inv(cov_yy)
+    # Localized gain (if unity weightings used then the same, control out there not here)
+    K = (P_xy * W_combined) @ np.linalg.inv(cov_yy)
+
+    # print("Max gain non-localized:", np.abs(K_nonloc).max())
+    # print("Max gain localized:", np.abs(K).max())
+
     
     # (h) Get the forecasted measurement for each ensemble member.
     Hxf = ens[measured_idx, :]                   # shape (2P, N_e)
@@ -91,6 +117,7 @@ def enkf_update_full_field_combined(ens, y, measured_idx, R, infl):
 redu_directory = "EnKFMeshData/reducedMeshData"
 full_directory = "EnKFMeshData/fullMeshData"
 outp_directory = "EnKFMeshData/filteredMeshData/"
+cellCentInpDir = "inputs/cellCentres"
 
 # (1) Read the reference (measurement) data from the reduced mesh.
 ref_filepath = os.path.join(redu_directory, "refSoln.csv")
@@ -138,9 +165,10 @@ P = len(ref_IDs)  # number of measured points per field
 measured_idx_combined = np.concatenate((ref_IDs, ref_IDs + N_full))
 
 # (5) Set measurement noise parameters and construct the combined noise covariance.
-sigma_u, sigma_v = 0.05, 0.05    # standard deviations for Ux and Uy
-rho_u, rho_v     = 0.0, 0.0       # assume no cross-point correlation
-inflationFactor  = 1.00           # inflation applied to anomaly matrix to prevent collapse
+sigma_u, sigma_v = 0.05, 0.05       # standard deviations for Ux and Uy
+rho_u, rho_v     = 0.0, 0.0         # assume no cross-point correlation
+inflationFactor  = 1.00             # inflation applied to anomaly matrix to prevent collapse
+L = 10                               # covariance localisation characteristic length  
 
 R_u = generate_R(P, sigma_u, rho_u)
 R_v = generate_R(P, sigma_v, rho_v)
@@ -150,8 +178,22 @@ R_combined = np.block([
     [np.zeros((P, P)), R_v]
 ])  # Need to change if rho becomes non-zero and there are quanitifyable correlations
 
+# (5 1/2) Get cell centre information and calculate weights for covariance localisation
+Cx = np.loadtxt(os.path.join(cellCentInpDir,"mesh2_Cx"))
+Cy = np.loadtxt(os.path.join(cellCentInpDir,"mesh2_Cy"))
+state_pos = np.column_stack((Cx, Cy))
+meas_pos = state_pos[ref_IDs, :]
+
+W = compute_localization_weights(state_pos, meas_pos, L)  # shape (N, P) 
+W_combined = np.block([
+    [W, W],
+    [W, W]])
+# print("W min, max, mean:", W.min(), W.max(), W.mean())
+W_combined = np.ones((2*N_full, 2*P)) # Uncomment to use weightings of 1, hence not using any localisation
+
+
 # (6) Perform the combined EnKF update.
-ens_combined_updated = enkf_update_full_field_combined(ens_combined, y_combined, measured_idx_combined, R_combined, inflationFactor)
+ens_combined_updated = enkf_update_full_field_combined(ens_combined, y_combined, measured_idx_combined, R_combined, inflationFactor, W_combined)
 
 # (7) Split the updated combined state back into u and v components.
 ens_u_full_updated = ens_combined_updated[:N_full, :]
