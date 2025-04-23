@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from PIL import Image
 import pyvista as pv
+from pyvistaqt import BackgroundPlotter # type: ignore
 import time
 import pandas as pd
 import numpy as np
@@ -15,6 +16,10 @@ from matplotlib.lines import Line2D
 import matplotlib.patches as patches  # For adding patch shapes
 import time as timepkg
 
+import vtk
+from vtkmodules.vtkCommonCore import vtkLogger
+vtk.vtkObject.GlobalWarningDisplayOff()
+
 if len(sys.argv) > 1 and sys.argv[1]:
     assimInt = float(sys.argv[1])       # Automatically inherit values if run from ALLRUN
     totalRuntime = int(sys.argv[2])
@@ -24,7 +29,7 @@ else:
     assimInt = 20                        # Manually set values if run internally
     totalRuntime = 200
     writeFreq = 400
-    maxTimeWindow = 160*100
+    maxTimeWindow = 100000000*100
 
 plotAll = 0
 plotAvg = 1
@@ -48,6 +53,7 @@ input_dir = os.path.join(parent_dir, "visualisations")
 output_dir = os.path.join(input_dir, "animations")
 gif_dir = os.path.join(output_dir, "gifs")
 vtk_dir = os.path.join(input_dir, "vtk")
+goodoutput_dir = os.path.join(parent_dir,"errorPlots")
 
 # Clean the output directories
 if os.path.exists(output_dir):
@@ -145,12 +151,14 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
             # Extract the timestep assuming it is the part after the final underscore.
             t_str = base.split('_')[-1].replace(".vtk", "")
             t_val = int(t_str)
+            # print(t_val)
         except ValueError:
             continue  # Skip files whose names do not conform.
         
         # Only select files with nonzero timesteps that are multiples of the specified time_interval.
-        if t_val != 0 and t_val % time_interval == 0:
+        if t_val != 0 and t_val % time_interval == 0 and t_val <= maxTimeWindow:
             selected_files.append(fname)
+            # print("selected")
     
     if not selected_files:
         print("No files match the given time_interval criteria.")
@@ -198,8 +206,15 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
     global_uv = uv_global_sum / N  # global time-averaged u′v′ field
     global_v2 = v2_global_sum / N  # global time-averaged v′² field
     
-    # # 4. Ensure the output directory exists.
-    # os.makedirs(output_dir, exist_ok=True)
+    # # 4. Ensure the output directory exists and clean existing clashing files.
+    os.makedirs(output_dir, exist_ok=True)
+    rm_pattern = os.path.join(output_dir, f"{output_filename}_*.vtk")
+    for file_path in glob.glob(rm_pattern):
+        try:
+            os.remove(file_path)
+            print(f"Removed: {file_path}")
+        except OSError as e:
+            print(f"Error removing {file_path}: {e}")
     
     # 5. Pass 3: Process each file individually.
     for fname in selected_files:
@@ -241,6 +256,7 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
         # Save the new VTK file as "ensfluct_{t}.vtk" in the output directory.
         output_file = os.path.join(output_dir, f"{output_filename}_{t_str}.vtk")
         vtk_obj.save(output_file)
+        print(f"Fluctuation time data written to {output_file}")
 
 # Function to quantify difference between fluctuating fields
 def compute_error_metrics(ensemble_field, reference_field, cellVols):
@@ -352,7 +368,7 @@ if plotAvg:
         # print(f"{int(int(t)/writeFreq)}/{totalRuntime}")
         print(t)
         if int(t) == 3: continue
-        if int(t) >= int(maxTimeWindow): print("reached time window end"); break
+        if int(t) > int(maxTimeWindow): print("reached time window end"); break
         files_t = member_files_by_timestep[t]
         sum_array_Ux = None
         sum_array_Uy = None
@@ -430,7 +446,7 @@ if plotAvg:
             timestep = Path(file).stem.split("_")[-1]
             print(timestep)
             if int(timestep) == 3: continue
-            if int(timestep) >= maxTimeWindow: break
+            if int(timestep) > int(maxTimeWindow): print("reached time window end"); break
             # print(f"{int(int(timestep)/writeFreq)}/{totalRuntime}")
             vtk_object = pv.read(file)
             vtk_object["Ux"] = vtk_object["U"][:, 0]
@@ -585,7 +601,7 @@ if plotRMS:
         v_field="Uy",
         output_dir=vtk_dir,
         output_filename="ensfluct",
-        time_interval=writeFreq*assimInt,
+        time_interval=100*assimInt,
         remove_original=False
     )
     print("Computing reference r.m.s.")
@@ -595,7 +611,7 @@ if plotRMS:
         v_field="Uy",
         output_dir=vtk_dir,
         output_filename="reffluct",
-        time_interval=writeFreq*assimInt,
+        time_interval=100*assimInt,
         remove_original=False
     )
 
@@ -718,13 +734,40 @@ if plotRMS:
         ax.set_ylim([-12, 12])
         plt.tight_layout()
         
-        output_plot_path = f"outputs/errorPlots/{field}.png"
+        output_plot_path = f"outputs/errorPlots/overlaid_{field}.png"
         plt.savefig(output_plot_path, dpi=300)
         plt.show(block=False)
         start_plot_timer = timepkg.time()
         while timepkg.time() - start_plot_timer < 2:
             plt.pause(0.1)
         plt.close()
+
+    # Loop over each field and produce individual visualisations of each field for side-by-side comparison
+    for field in fields:
+        runname = "ens"
+        for vtk_object in [ens_vtk, reff_vtk]:
+
+            plotter = BackgroundPlotter(off_screen=False)
+            plotter.window_size = [1000, 500]
+            plotter.add_mesh(vtk_object, scalars=field, cmap="coolwarm", clim=(0,0.5))
+            plotter.camera_position = [
+                (0, 0, 100),
+                (10, 0, 0),
+                (0, 1, 0),
+            ]
+            plotter.set_background("white")
+            plotter.enable_parallel_projection()
+            plotter.camera.parallel_scale = 7
+            
+            add_points(plotter, points_to_add)
+            
+            if maxTimeWindow == 10000000000: image_file = os.path.join(goodoutput_dir, f"{runname}_{field}.png")
+            else: image_file = os.path.join(goodoutput_dir, f"{runname}_{field}_windowed{maxTimeWindow/100}.png")
+
+            time.sleep(3)
+            plotter.screenshot(image_file)
+            plotter.close()
+            runname = "ref"
 
 
 # Delete all .png files to save storage
