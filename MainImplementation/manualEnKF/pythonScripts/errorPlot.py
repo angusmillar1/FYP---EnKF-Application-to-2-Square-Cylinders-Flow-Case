@@ -8,13 +8,6 @@ import numpy as np
 import sys
 from scipy.stats import linregress
 
-# CHOOSE WHAT TO PLOT
-wholeFieldOn = 1
-probePlotOn = 1
-plotAvgVar = 1
-plotAssimInt = 1
-printProgress = 1
-
 if len(sys.argv) > 1 and sys.argv[1]:
     # Inherited inputs if calling from Allrun.py 
     num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
@@ -25,18 +18,21 @@ if len(sys.argv) > 1 and sys.argv[1]:
     plotAvgVar = 1
     plotAssimInt = 1
     printProgress = 0
-else:
-    # Equivalent inherited inputs if running independtly
-    num_members = 10    # Manually set number of members for spread plot
-    assimInt = 10       # Manually set assimilation interval for plotting of vert lines
-
-# Other plotting inputs
-probeNum = [0] # Choose probe points to plot for
-
-if len(sys.argv) > 1 and sys.argv[1]:
     timeWindow = []     # Automatically select whole domain when run from allrun
 else:
-    timeWindow = [0,140] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    # Equivalent inherited inputs if running independtly
+    num_members = 15    # Manually set number of members for spread plot
+    assimInt = 20       # Manually set assimilation interval for plotting of vert lines
+    # Choose what to plot
+    wholeFieldOn = 1
+    probePlotOn = 1
+    plotAvgVar = 1
+    plotAssimInt = 1
+    printProgress = 1
+    timeWindow = [0,160] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+
+# Other plotting inputs
+probeNum = [0,1] # Choose probe points to plot for
 
 
 
@@ -54,7 +50,7 @@ if 'p' not in df.columns:
     df.insert(0, 'p', range(0, len(df)))    # Insert a new column 'p' with index starting from 1
     df.to_csv(probe_coords_file, index=False)
     if printProgress: print(f"Modified file saved as {probe_coords_file}")
-else: printProgress: print(f"{probe_coords_file} already contains point indices")
+else: print(f"{probe_coords_file} already contains point indices")
 
 
 

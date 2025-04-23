@@ -19,10 +19,12 @@ if len(sys.argv) > 1 and sys.argv[1]:
     assimInt = float(sys.argv[1])       # Automatically inherit values if run from ALLRUN
     totalRuntime = int(sys.argv[2])
     writeFreq = int(sys.argv[3])
+    maxTimeWindow = 10000000000
 else:
-    assimInt = 5                        # Manually set values if run internally
+    assimInt = 20                        # Manually set values if run internally
     totalRuntime = 200
-    writeFreq = 100
+    writeFreq = 400
+    maxTimeWindow = 160*100
 
 plotAll = 0
 plotAvg = 1
@@ -343,16 +345,21 @@ if plotAvg:
     
     # Sort timesteps in increasing order
     timesteps_sorted = sorted(member_files_by_timestep.keys(), key=lambda x: int(x))
+    print(timesteps_sorted)
     
     image_files_avg = []
     for t in timesteps_sorted:
         # print(f"{int(int(t)/writeFreq)}/{totalRuntime}")
+        print(t)
+        if int(t) == 3: continue
+        if int(t) >= int(maxTimeWindow): print("reached time window end"); break
         files_t = member_files_by_timestep[t]
         sum_array_Ux = None
         sum_array_Uy = None
         count = 0
         # For each ensemble member file at this timestep, read and accumulate Ux data
         for file in files_t:
+            # print(file)
             vtk_object = pv.read(file)
             fields_to_keep = ["U"]
             for field in list(vtk_object.point_data.keys()):
@@ -421,6 +428,9 @@ if plotAvg:
     if "refSoln" in grouped_files:
         for file in grouped_files["refSoln"]:
             timestep = Path(file).stem.split("_")[-1]
+            print(timestep)
+            if int(timestep) == 3: continue
+            if int(timestep) >= maxTimeWindow: break
             # print(f"{int(int(timestep)/writeFreq)}/{totalRuntime}")
             vtk_object = pv.read(file)
             vtk_object["Ux"] = vtk_object["U"][:, 0]
