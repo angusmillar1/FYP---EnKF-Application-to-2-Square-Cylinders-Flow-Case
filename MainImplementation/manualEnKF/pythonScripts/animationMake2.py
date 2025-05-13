@@ -26,9 +26,9 @@ if len(sys.argv) > 1 and sys.argv[1]:
     writeFreq = int(sys.argv[3])
     maxTimeWindow = 10000000000
 else:
-    assimInt = 20                        # Manually set values if run internally
-    totalRuntime = 200
-    writeFreq = 400
+    assimInt = 25                        # Manually set values if run internally
+    totalRuntime = 300
+    writeFreq = 250
     maxTimeWindow = 100000000*100
 
 plotAll = 0
@@ -181,6 +181,7 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
             v_sum += v_array
     mean_u = u_sum / N
     mean_v = v_sum / N
+    mean_magU = np.sqrt(mean_u**2 + mean_v**2)
     
     # 3. Pass 2: Compute global (time-averaged) second moments.
     u2_global_sum = None
@@ -205,6 +206,7 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
     global_u2 = u2_global_sum / N  # global time-averaged u′² field
     global_uv = uv_global_sum / N  # global time-averaged u′v′ field
     global_v2 = v2_global_sum / N  # global time-averaged v′² field
+    global_tke = 0.5*(global_u2 + global_v2)
     
     # # 4. Ensure the output directory exists and clean existing clashing files.
     os.makedirs(output_dir, exist_ok=True)
@@ -257,6 +259,40 @@ def compute_uv_fluctuations(file_pattern, u_field, v_field, output_dir, output_f
         output_file = os.path.join(output_dir, f"{output_filename}_{t_str}.vtk")
         vtk_obj.save(output_file)
         print(f"Fluctuation time data written to {output_file}")
+
+    # 6. Write separate vtk file with time averaged values for easier export
+    geom = pv.read(selected_files[0]).copy(deep=True)
+    geom["mean_u"]    = mean_u
+    geom["mean_v"]    = mean_v
+    geom["mean_magU"] = mean_magU
+    geom["rms_u"]     = global_u2
+    geom["rms_v"]     = global_v2
+    geom["rms_uv"]    = global_uv
+    geom["tke"]       = global_tke
+
+    # Add in mean vorticity
+    mean_U = np.column_stack((mean_u, mean_v, np.zeros_like(mean_u)))
+    geom["mean_U"] = mean_U
+    deriv = geom.compute_derivative(
+        scalars="mean_U",
+        gradient=False,
+        divergence=False,
+        vorticity=True)
+    vort_vec = deriv["vorticity"]            # shape (n_pts, 3)
+    vort_z   = vort_vec[:, 2]                # pick out the third column
+    geom["vort"] = vort_z          # attach as a new scalar
+
+    # remove original U and p fields
+    for arr in ("U", "p", "mean_U"):
+        if arr in geom.point_data:
+            geom.point_data.remove(arr)
+        if arr in geom.cell_data:
+            geom.cell_data.remove(arr)
+
+    os.makedirs(output_dir, exist_ok=True)
+    outname = os.path.join("outputs/errorPlots", f"{output_filename}_mean_and_rms.vtk")
+    geom.save(outname)
+    print(f"Wrote combined file → {outname}")
 
 # Function to quantify difference between fluctuating fields
 def compute_error_metrics(ensemble_field, reference_field, cellVols):
@@ -367,7 +403,7 @@ if plotAvg:
     for t in timesteps_sorted:
         # print(f"{int(int(t)/writeFreq)}/{totalRuntime}")
         print(t)
-        if int(t) == 3: continue
+        if int(t) != 0 and int(t) < 10: continue
         if int(t) > int(maxTimeWindow): print("reached time window end"); break
         files_t = member_files_by_timestep[t]
         sum_array_Ux = None
@@ -445,7 +481,7 @@ if plotAvg:
         for file in grouped_files["refSoln"]:
             timestep = Path(file).stem.split("_")[-1]
             print(timestep)
-            if int(timestep) == 3: continue
+            if int(timestep) != 0 and int(timestep) < 10: continue
             if int(timestep) > int(maxTimeWindow): print("reached time window end"); break
             # print(f"{int(int(timestep)/writeFreq)}/{totalRuntime}")
             vtk_object = pv.read(file)
