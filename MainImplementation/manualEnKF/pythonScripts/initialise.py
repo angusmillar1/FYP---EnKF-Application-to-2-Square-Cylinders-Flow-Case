@@ -56,6 +56,12 @@ for file in os.listdir("EnKFMeshData/filteredMeshData"):
         os.remove(file_path)  # Delete the file
 print("Cleared all contents in filteredMeshData")
 
+for file in os.listdir("EnKFMeshData/postUpdateFullMeshData"):
+    if file.endswith(".csv"):  # Only target .csv files
+        file_path = os.path.join("EnKFMeshData/postUpdateFullMeshData", file)
+        os.remove(file_path)  # Delete the file
+print("Cleared all contents in postUpdateFullMeshData")
+
 # Also delete past error and visualisation data (to avoid confusion with past runs)
 def remove_files_in_directory(directory):
     for file_name in os.listdir(directory):

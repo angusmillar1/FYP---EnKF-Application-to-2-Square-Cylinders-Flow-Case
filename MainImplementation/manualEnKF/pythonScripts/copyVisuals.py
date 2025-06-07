@@ -1,17 +1,18 @@
+# To be called at the end of runs
+# Moves the vtk files all to one location for easier comparison if viewing in paraview
+
 import os
 import shutil
 import re
 
 # Directories
 member_run_files = "memberRunFiles"
-# input_directory = "../referenceSolutions/Mesh1RandT500"
-# input_directory = "../referenceSolutions/Mesh1DevT1000"
 output_directory = "outputs/visualisations/vtk"
 
 # Ensure the output directory exists
 os.makedirs(output_directory, exist_ok=True)
 
-# Regular expression to match .vtk filenames with the pattern *_xxx.vtk
+# Regular expression to match .vtk filenames with the pattern *_xxx.vtk (includes members and refSoln)
 vtk_pattern = re.compile(r".*_(\d+)\.vtk$")
 
 # Collect the set of xxx numbers from the memberRunFiles
@@ -37,13 +38,5 @@ for member_dir in os.listdir(member_run_files):
                 src_file = os.path.join(member_path, file)
                 dst_file = os.path.join(output_directory, file)
                 shutil.move(src_file, dst_file)
-
-# Copy matching .vtk files from input/ to outputs/visualisations (if separate reference solution)
-# for file in os.listdir(input_directory):
-#     match = vtk_pattern.match(file)
-#     if match and match.group(1) in common_xxx_numbers:
-#         src_file = os.path.join(input_directory, file)
-#         dst_file = os.path.join(output_directory, file)
-#         shutil.copy2(src_file, dst_file)
 
 print("All .vtk files have been copied successfully.")

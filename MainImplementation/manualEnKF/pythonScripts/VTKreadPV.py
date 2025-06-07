@@ -6,6 +6,7 @@ import time
 import sys
 import re
 import pandas as pd
+import os
 
 # Specify whether or not to plot output
 display_output = 0  # 1 / 0
@@ -13,6 +14,7 @@ display_output = 0  # 1 / 0
 # Inputs
 # vtk_file_path = "../memberRunFiles/member1/VTK/member1_0.vtk"  # Path to the VTK file
 vtk_file_path = sys.argv[1]
+runtime = int(sys.argv[2])*100
 cell_ids_file = "outputs/reduced_mesh_cell_ids.csv"  # Path to the cell IDs file
 
 # Check if it's the initial conditions or not
@@ -21,6 +23,7 @@ decimal_point_index = vtk_file_path.find('.', last_underscore_index)  # Finds th
 
 # Extract the number between the last underscore and decimal point
 timestep = int(vtk_file_path[last_underscore_index + 1:decimal_point_index])
+prevTimestep = timestep - runtime
 
 # Set name of destination file
 match = re.search(r'/member(\d+)/', vtk_file_path)
@@ -132,3 +135,43 @@ df = pd.DataFrame(full_export_data)
 # Write to CSV
 output_file = "EnKFMeshData/fullMeshData/" + output_filename + ".csv"
 df.to_csv(output_file, index=False)
+
+
+# Extract data from immediately post update for error calculations
+
+# Only try if prevTimestep is non‐negative
+if prevTimestep >= 0:
+    # construct the filename for the previous timestep
+    prev_vtk_file_path = (
+        vtk_file_path[: last_underscore_index + 1]
+        + str(prevTimestep)
+        + vtk_file_path[decimal_point_index :]
+    )
+    try:
+        # read the previous‐timestep mesh
+        prev_mesh = pv.read(prev_vtk_file_path)
+    except FileNotFoundError:
+        print(f"Previous timestep file not found: {prev_vtk_file_path}")
+    else:
+        # extract full‐mesh data
+        prev_velocity_data = prev_mesh.cell_data["U"]
+        prev_Ux = prev_velocity_data[:, 0]
+        prev_Uy = prev_velocity_data[:, 1]
+        prev_cellIDs = prev_mesh.cell_data["cellID"]
+
+        # ensure output directory exists
+        out_dir = "EnKFMeshData/postUpdateFullMeshData"
+        os.makedirs(out_dir, exist_ok=True)
+
+        # build DataFrame and write CSV
+        full_prev_export = {
+            "Ux": prev_Ux,
+            "Uy": prev_Uy,
+            "CellID": prev_cellIDs
+        }
+        df_prev = pd.DataFrame(full_prev_export)
+        out_file = os.path.join(out_dir, f"{output_filename}.csv")
+        df_prev.to_csv(out_file, index=False)
+        print(f"Wrote previous full‐mesh CSV to: {out_file}")
+else:
+    print(f"Skipping previous timestep (prevTimestep = {prevTimestep})")
