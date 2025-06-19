@@ -1,6 +1,9 @@
+# Distribute and run the cfd sims
+# Also plot progress bars for tracking during runtime
+
+# Suppress the harmless warning that clogs up terminal
 import warnings
 warnings.filterwarnings("ignore", message="Starting a Matplotlib GUI outside of the main thread will likely fail.")
-
 
 import os
 import re
@@ -9,8 +12,6 @@ import matplotlib.pyplot as plt
 import threading
 import time
 import sys
-# import warnings
-# warnings.filterwarnings("ignore", message="Starting a Matplotlib GUI outside of the main thread")
 
 start_sim_timing = time.time()  # Time runtime 
 
@@ -23,7 +24,7 @@ prog_endtime = float(sys.argv[3])
 parent_dir = "memberRunFiles"
 
 # Define the OpenFOAM solver and VTK conversion commands
-solver_command = "bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && SC_pimpleFoam'"
+solver_command = "bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && SC_pimpleFoam'"  # Run case
 vtk_command = f"bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && foamToVTK -time {start_time}:{start_time+target_runtime} -fields \"(U p)\"'"  # Convert all written files (only at current time step to reduce cost)
 # vtk_command = f"bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && foamToVTK -time {target_runtime}'"  # Only at end time
 
@@ -33,8 +34,6 @@ member_dirs = [os.path.join(parent_dir, member_dir) for member_dir in sorted(os.
 # To store timestep and clock time data for plotting
 case_time_data = {member_dir: 0.0 for member_dir in member_dirs}  # Store current simulation time for each case
 member1_clock_time = 0.0  # To track ClockTime from member1 logs
-
-
 
 # Function to monitor log files and update plotting data
 def monitor_logs():
@@ -57,7 +56,7 @@ def monitor_logs():
                             clock_time_match = re.search(r"ClockTime = ([\d\.]+) s", line)
                             if clock_time_match:
                                 member1_clock_time = float(clock_time_match.group(1))
-        time.sleep(10)  # Check for updates every 2 seconds
+        time.sleep(10)  # Check for updates every 10 seconds
 
 # Function to plot data in real-time as a bar chart
 def live_plot():
@@ -103,10 +102,10 @@ def live_plot():
         ax.grid(axis="y", linestyle="--", alpha=0.7)
         plt.ylim(0,prog_endtime*1.1)
 
-        plt.pause(10)  # Update the plot every 2 seconds
+        plt.pause(10)  # Update the plot every 10 seconds
 
 
-# Start monitoring and plotting in parallel threads
+# Start monitoring and plotting in parallel threads - comment if unwanted (slight performance penalty)
 threading.Thread(target=monitor_logs, daemon=True).start()
 threading.Thread(target=live_plot, daemon=True).start()
 
@@ -121,7 +120,7 @@ for member_dir in member_dirs:
     )
     processes.append((solver_process, member_dir, log_file))
 
-# Monitor solver processes
+# Monitor solver processes - start vtk conversion once cfd done
 for solver_process, member_dir, log_file in processes:
     solver_process.wait()
     if solver_process.returncode == 0:

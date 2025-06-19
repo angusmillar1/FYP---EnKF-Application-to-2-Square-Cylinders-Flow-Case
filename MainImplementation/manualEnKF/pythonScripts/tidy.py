@@ -1,3 +1,6 @@
+# Delete the U_collection2.txt file that is unnecessarily written containing all velocity data
+# Now redundant - solver files modified to not output
+
 import os
 import glob
 

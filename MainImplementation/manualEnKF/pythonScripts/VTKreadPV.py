@@ -1,3 +1,5 @@
+# Process the openfoam output vtk files and write to csvs for analysis and update
+
 import pyvista as pv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,7 +39,7 @@ try:
     mesh = pv.read(vtk_file_path)
 except FileNotFoundError:
     print(f"File not found: {vtk_file_path}")
-    sys.exit(1)  # Exit with non-zero code
+    sys.exit(1)  # Exit with non-zero code - to be picked up and exited in allrun
 num_cells = mesh.n_cells
 
 if timestep != 0:
@@ -50,14 +52,14 @@ if timestep != 0:
 
 # Extract full mesh data
 full_cell_centers = mesh.cell_centers().points
-velocity_data = mesh.cell_data["U"]  # Velocity data (e.g., "U")
-Ux_data = velocity_data[:, 0]  # X-component of velocity
-Uy_data = velocity_data[:, 1]  # Y-component of velocity
+velocity_data = mesh.cell_data["U"]     # Velocity data
+Ux_data = velocity_data[:, 0]           # X-component of velocity
+Uy_data = velocity_data[:, 1]           # Y-component of velocity
 # P_data = mesh.cell_data["p"]  # Pressure data
 full_IDs = mesh.cell_data["cellID"]  # Cell IDs
 
 if timestep != 0:
-    # Extract reduced mesh data
+    # Extract reduced mesh data from predefined measurement points
     reduced_cell_centers = full_cell_centers[cell_ids]
     reduced_velocity_data = velocity_data[cell_ids]
     reduced_Ux_data = reduced_velocity_data[:, 0]
@@ -103,7 +105,7 @@ if display_output:
         plt.pause(0.1)  # Allow GUI updates during the sleep
     plt.close()
 
-# --------- Write data to .csv files in vector format ----------
+# Write data to .csv files in vector format
 
 if timestep != 0:
     # Reduced Data
@@ -139,7 +141,7 @@ df.to_csv(output_file, index=False)
 
 # Extract data from immediately post update for error calculations
 
-# Only try if prevTimestep is non‐negative
+# Only try if prevTimestep is non‐negative (i.e. not initialisation)
 if prevTimestep >= 0:
     # construct the filename for the previous timestep
     prev_vtk_file_path = (

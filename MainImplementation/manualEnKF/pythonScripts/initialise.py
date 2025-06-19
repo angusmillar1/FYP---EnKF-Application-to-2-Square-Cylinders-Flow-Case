@@ -1,3 +1,5 @@
+# Clear out and remake the required file structure for the subsequent scripts to run from
+
 import os
 import shutil
 import subprocess
@@ -5,24 +7,15 @@ import sys
 import re
 import pandas as pd
 
-# # Set the number of members
-# num_members = 2  # Change this number as needed
-# # Select the Mesh to use
-# meshNum = 1
-
 num_members = int(sys.argv[1])  # Receive number of members from ALLRUN.py script
-mesh_num = int(sys.argv[2])  # Receive mesh choice from ALLRUN.py script
-init_runtime = sys.argv[3]  # Receive the time for the members to initially evolve before informing from ALLRUN.py
-file_write_freq = sys.argv[4]  # Receive the frequency at which to write out data
-IC_type = sys.argv[5]
+mesh_num = int(sys.argv[2])     # Receive mesh choice from ALLRUN.py script
+init_runtime = sys.argv[3]      # Receive the time for the members to initially evolve before informing from ALLRUN.py
+file_write_freq = sys.argv[4]   # Receive the frequency at which to write out data
+IC_type = sys.argv[5]           # Receive initialisation metthod
 
 # Define the source and destination directories
-source_dir = "exampleOpenfoamFiles/Mesh" + str(mesh_num) + "Files"
-destination_parent_dir = "memberRunFiles"
-
-
-
-# ------ DELETE DATA FROM PREVIOUS RUNS ------
+source_dir = "exampleOpenfoamFiles/Mesh" + str(mesh_num) + "Files"  # Where to find OpenFOAM template files
+destination_parent_dir = "memberRunFiles"                           # Where to write files
 
 # Delete all existing files and directories in the destination parent directory
 if os.path.exists(destination_parent_dir):
@@ -44,18 +37,21 @@ for file in os.listdir("EnKFMeshData/reducedMeshData"):
         os.remove(file_path)  # Delete the file
 print("Cleared all contents in reducedMeshData")
 
+# And the mesh data csvs
 for file in os.listdir("EnKFMeshData/fullMeshData"):
     if file.endswith(".csv"):  # Only target .csv files
         file_path = os.path.join("EnKFMeshData/fullMeshData", file)
         os.remove(file_path)  # Delete the file
 print("Cleared all contents in fullMeshData")
 
+# And the filtered mesh csvs
 for file in os.listdir("EnKFMeshData/filteredMeshData"):
     if file.endswith(".csv"):  # Only target .csv files
         file_path = os.path.join("EnKFMeshData/filteredMeshData", file)
         os.remove(file_path)  # Delete the file
 print("Cleared all contents in filteredMeshData")
 
+# And from the mesh data used for error metric calculation
 for file in os.listdir("EnKFMeshData/postUpdateFullMeshData"):
     if file.endswith(".csv"):  # Only target .csv files
         file_path = os.path.join("EnKFMeshData/postUpdateFullMeshData", file)
@@ -77,14 +73,6 @@ remove_files_in_directory("outputs/visualisations/vtk")
 remove_files_in_directory("outputs/errorPlots")
 print("Cleared all contents in outputs")
 
-
-
-
-
-
-
-# ------ CREATE NEW FILES FOR NEW RUNS ------
-
 # Loop to copy and rename directories for each member
 for i in range(1, num_members + 1):
     member_dir_name = f"member{i}"
@@ -105,26 +93,26 @@ print("All member directories created successfully!")
 # Generate initial conditions
 subprocess.run([sys.executable, "pythonScripts/genFirstICs.py", str(num_members), str(mesh_num), init_runtime, file_write_freq, IC_type])
 
-# Convert initial conditions to VTK files
+# Convert initial conditions to vtk files
 member_directory = "memberRunFiles"
 vtk_command = "bash -c '. /apps/openfoam/10.0/OpenFOAM-10/etc/bashrc && foamToVTK -time 0'"
 
-# Regular expression to match directory names like "memberX" where X is a number
+# Regular expression to match directory names for members
 pattern = re.compile(r"^member\d+$")
 
-# Step through each subdirectory in the main directory
+# Step through each member directory in the main directory
 for root, dirs, files in os.walk(member_directory):
     for directory in dirs:
-        # Check if the directory name matches the pattern
+        # Check if the directory name matches the pattern or if refSoln
         if pattern.match(directory) or directory=="refSoln":
             # Construct the full path to the subdirectory
             subdirectory_path = os.path.join(root, directory)
-            # print(subdirectory_path)
+            # print(subdirectory_path) # write for debugging
 
             # Change to the subdirectory
             print(f"Processing directory: {subdirectory_path}")
             try:
-                # Execute the shell command in the subdirectory
+                # Execute the shell command in the subdirectory to define the path to openfoam and convert the ICs to vtks fro reading/plotting
                 subprocess.run(vtk_command, cwd=subdirectory_path, shell=True,
                     stdout=open(os.path.join(subdirectory_path, "log.foamToVTK"), "w"),
                     stderr=subprocess.STDOUT)
@@ -133,8 +121,6 @@ for root, dirs, files in os.walk(member_directory):
 
 print("Initial conditions converted to readable output")
 
-# CREATE VELOCITY PROBES AT MEASUREMENT POINTS
-
 # Generate indices of cells for reduced resolution mesh
 subprocess.run([sys.executable, "pythonScripts/MeshResReducer.py", "memberRunFiles/member1/VTK/member1_0.vtk"])
 
@@ -142,6 +128,7 @@ subprocess.run([sys.executable, "pythonScripts/MeshResReducer.py", "memberRunFil
 df = pd.read_csv("outputs/sample_points_locations.csv")
 probe_points = df[['x', 'y', 'z']].values.tolist()
 
+# Helper function to write the controlDict openfoam formatted file
 def write_controlDict_file(filename, init_runtime, file_write_freq, probe_points):
     header = f"""/*--------------------------------*- C++ -*----------------------------------*\\
   =========                 |
@@ -313,10 +300,11 @@ Square_down
     with open(filename, 'w') as f:
         f.write(full_content)
 
+# Write controlDict files to each member...
 for memIndex in range(1, num_members+1):
     outputDir = "memberRunFiles/member" + str(memIndex)
     write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq, probe_points)
-
+#... and for the reference solution
 outputDir = "memberRunFiles/refSoln"
 write_controlDict_file(outputDir+"/system/controlDict", init_runtime, file_write_freq, probe_points)
 

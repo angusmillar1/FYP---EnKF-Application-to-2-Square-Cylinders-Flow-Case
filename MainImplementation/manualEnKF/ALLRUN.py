@@ -98,8 +98,8 @@ subprocess.run([sys.executable, "pythonScripts/copyVisuals.py"])
 print("Creating animations")
 subprocess.run([sys.executable, "pythonScripts/animationMake2.py", str(runtime), str(prog_endtime), str(file_write_freq)])
 
-# Notify of completion - **change to own email address**
-subprocess.run("echo 'The run has finished!' | mail -s 'Job Done' acm21@ic.ac.uk", shell=True)
+# Notify of completion - **change to own email address** (uncomment)
+# subprocess.run("echo 'The run has finished!' | mail -s 'Job Done' **YOUR_EMAIL_HERE**", shell=True)
 
 # Time runtime 
 end_whole_timing = time.time()

@@ -1,3 +1,7 @@
+# Script called by initialise.py, used to determine which cells to probe for measurements
+# Takes inputs of distribution method and parameters and writes coords file
+# Also plots those points, saved to outputs/ and displayed at the start of the run to verify inputted points are as expected
+
 import vtk
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,20 +34,14 @@ reduction_percentage = 0.1  # Reduce to x% of the original resolution (=1 => 1%)
 #     [6.0, -1.0, 0.0],
 #     [8.0, -1.0, 0.0],
 #     [10.0, -1.0, 0.0]
-# ]
-df = pd.read_csv("inputs/measurementPoints/measurement_coords.csv")
+# ]                         # If you want to define the points in this scripts
+df = pd.read_csv("inputs/measurementPoints/measurement_coords.csv") # or read in points from a csv (e.g. if generating from pod peaks)
 custom_coordinates = df[['x', 'y', 'z']].values.tolist()
 
 # Specify whether to plot resolution of reduced mesh or not
 display_reduced_mesh = 1  # 1 / 0
-# ----------------------------------------------------------------------------
 
-
-
-
-
-
-# Function to build vtk functions if pyvista not installed
+# Function to build vtk functions if pyvista not installed - e.g. on spitfire.ae.ic.ac.uk linux machine
 def create_vtk_functions(vtk_file_path):
     reader = vtk.vtkUnstructuredGridReader()
     reader.SetFileName(vtk_file_path)
@@ -57,29 +55,20 @@ def create_vtk_functions(vtk_file_path):
     return mesh, locator
 
 # Load the mesh
-# vtk_file_path = "../memberRunFiles/member1/VTK/member1_0.vtk"
-vtk_file_path = sys.argv[1]
-output_filename = "outputs/reduced_mesh_cell_ids.csv"
+vtk_file_path = sys.argv[1]     # Receive the path to the initial conditions vtk for each member
+output_filename = "outputs/reduced_mesh_cell_ids.csv"  # Where to write csv of points to
 
 # Clear any previous runs to rewrite
 if os.path.exists(output_filename):
     os.remove(output_filename)  # Deletes the file
-    # print(f"{output_filename} has been deleted.")
+    # print(f"{output_filename} has been deleted.") # for debugging
 # else:
-    # print(f"{output_filename} does not exist in the current directory.")
-
-
+    # print(f"{output_filename} does not exist in the current directory.") # for debugging
 
 # Read mesh data into a variable (check dependencies)
 mesh, locator = create_vtk_functions(vtk_file_path)
 
-
-
-
-
-
-# REDUCE GRID BASED ON UNFORM DISRIBUTION
-
+# Reduce grid based on uniform (partially or wholly) point distribution
 if probe_type == "uniform" or probe_type == "combined":
 
     # Total number of cells in the original mesh
@@ -88,10 +77,10 @@ if probe_type == "uniform" or probe_type == "combined":
     # Calculate the number of points in the reduced grid
     reduced_cell_count = int((total_cells * reduction_percentage) / 100)
 
-    # Ensure a minimum number of points
+    # Ensure a minimum number of points of 1
     reduced_cell_count = max(reduced_cell_count, 1)
 
-    # Calculate approximate grid size (rows and columns)
+    # Calculate grid size
     aspect_ratio = (x_range[1] - x_range[0]) / (y_range[1] - y_range[0])
     num_rows = int(np.sqrt(reduced_cell_count / aspect_ratio))
     num_cols = int(reduced_cell_count / num_rows)
@@ -102,14 +91,12 @@ if probe_type == "uniform" or probe_type == "combined":
     reduced_grid_uniform = np.array([[x, y, 0.0] for x in x_coords for y in y_coords])
 
 
-## REDUCE GRID BASED ON INDIVIDUALLY DEFINED POINTS
+# Reduce grid based on individually defined points
 if probe_type == "specified" or probe_type == "combined":
     # Define specific coordinates for the reduced grid
     reduced_grid_custom = np.array(custom_coordinates)
 
-# ----------------------------------------------------------------------------------
-## DECIDE WHICH MESH TO USE OR COMBINE, *** ONLY ONE UNCOMMENTED ***, (this control moved to top)
-
+# Create final sets of points determined by selection method
 if probe_type == "uniform":
     reduced_grid = reduced_grid_uniform
 elif probe_type == "specified":
@@ -118,8 +105,6 @@ elif probe_type == "combined":
     reduced_grid = np.vstack([reduced_grid_uniform, reduced_grid_custom])
 else:
     raise ValueError("Invalid reduced mesh type")
-
-# ----------------------------------------------------------------------------------
 
 # Remove any repeated values
 reduced_grid = np.unique(reduced_grid, axis=0)
@@ -199,7 +184,7 @@ print(f"Reduced grid points have been written to {csv_output_filename}.")
 
 
 
-# ---------- Plot the results using Matplotlib ------------
+# Plot the results - desired points and mapped centroids for comparison
 if display_reduced_mesh:
     fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -234,6 +219,6 @@ if display_reduced_mesh:
     plt.show(block=False)
     start_plot_timer = time.time()
     while time.time() - start_plot_timer < 3:
-        plt.pause(0.1)  # Allow GUI updates during the sleep
+        plt.pause(0.1)
     plt.close()
 

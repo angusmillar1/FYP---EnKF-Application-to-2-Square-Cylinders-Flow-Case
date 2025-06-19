@@ -1,25 +1,21 @@
+# Not used anymore
+# Create a zoomed in visualisation of the measurement points selected
+# Saved to outputs/ and displayed at the start of the run to verify selected points are as expected
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.ticker as ticker
 import time
-import numpy as np
 
-# Define plot parameters
+# Define domain limits for plot
 x_range = [-4, 12]
 y_range = [-4, 4]
 
 # Read in point coords
-# probe_coords_file = "outputs/sample_points_locations.csv"
 probe_coords_file = "inputs/measurement_coords.csv"
-
 probe_coords = pd.read_csv(probe_coords_file, skiprows=1, header=None).values
-
 print(probe_coords)
-
-
-
-
 
 # Create plots
 fig, ax = plt.subplots(figsize=(6, 4))
