@@ -1,3 +1,6 @@
+# Script to calculate and plot error series and statistics fields
+# Can be run inline with the allrun script or independently for post processing
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker 
@@ -10,17 +13,17 @@ from scipy.stats import linregress
 
 if len(sys.argv) > 1 and sys.argv[1]:
     # Inherited inputs if calling from Allrun.py 
-    num_members = int(sys.argv[1])  # Get number of members from parent script for spread plot
-    assimInt = float(sys.argv[2])   # Get assimilation interval for plotting of vert lines
+    num_members = int(sys.argv[1])
+    assimInt = float(sys.argv[2])
     # Plot everything when run in big sim
     wholeFieldOn = 1
     probePlotOn = 1
     plotAvgVar = 1
     plotAssimInt = 1
     printProgress = 0
-    timeWindow = []     # Automatically select whole domain when run from allrun
+    timeWindow = []     # Automatically select whole time series when run from allrun
 else:
-    # Equivalent inherited inputs if running independtly
+    # Equivalent manual inputs if running independently
     num_members = 15    # Manually set number of members for spread plot
     assimInt = 20       # Manually set assimilation interval for plotting of vert lines
     # Choose what to plot
@@ -29,21 +32,16 @@ else:
     plotAvgVar = 1
     plotAssimInt = 1
     printProgress = 1
-    timeWindow = [0,160] # Manually select region in time to plot, eg could be [2, 5] or left empty for whole domain.
+    timeWindow = [0,160] # Manually select interval in time to plot, eg could be [2, 5] or left empty for whole series.
 
 # Other plotting inputs
-probeNum = [0,1] # Choose probe points to plot for
-
-
-
+probeNum = [0,1] # Choose probe points to plot for referring to indices in outputs/sample_points_locations.csv
 
 # File path
-input_path = "outputs/"
-output_path = "outputs/errorPlots/"
+input_path = "outputs/"                 # For meas pts locations
+output_path = "outputs/errorPlots/"     # For writing plots to
 
-
-
-# ADD INDICES TO SAMPLE POINTS LOCATION FILE
+# Add point indices to measurement points file if missing
 probe_coords_file = input_path+"sample_points_locations.csv"
 df = pd.read_csv(probe_coords_file)
 if 'p' not in df.columns:
@@ -52,9 +50,8 @@ if 'p' not in df.columns:
     if printProgress: print(f"Modified file saved as {probe_coords_file}")
 else: print(f"{probe_coords_file} already contains point indices")
 
-
-
 # WHOLE FIELD ERRORS
+# Note: the csv file can be easily plotted externally too
 
 if wholeFieldOn:
     if printProgress: print("Starting whole field error plots")
@@ -72,14 +69,12 @@ if wholeFieldOn:
         required_columns = ["T", "L1_u", "L1_v", "L1_tot", "L2_u", "L2_v", "L2_tot", "MSE_u", "MSE_v", "MSE_tot"]
 
         if all(col in data.columns for col in required_columns):
-            # ---------------------------
+
             # L1 Norm Plot
-            # ---------------------------
+
             plt.figure(figsize=(10, 6))
             plt.plot(data["T"], data["L1_u"], label="L1_u", marker='o')
             plt.plot(data["T"], data["L1_v"], label="L1_v", marker='s')
-            # If you wish to include pressure later, uncomment the following:
-            # plt.plot(data["T"], data["L1_p"], label="L1_p", marker='^')
             plt.plot(data["T"], data["L1_tot"], label="L1_tot", marker='d')
 
             plt.xlim(left=0)
@@ -104,14 +99,11 @@ if wholeFieldOn:
                 plt.pause(0.1)
             plt.close()
 
-            # ---------------------------
             # L2 Norm Plot
-            # ---------------------------
+
             plt.figure(figsize=(10, 6))
             plt.plot(data["T"], data["L2_u"], label="L2_u", marker='o')
             plt.plot(data["T"], data["L2_v"], label="L2_v", marker='s')
-            # If you wish to include pressure later, uncomment the following:
-            # plt.plot(data["T"], data["L2_p"], label="L2_p", marker='^')
             plt.plot(data["T"], data["L2_tot"], label="L2_tot", marker='d')
 
             plt.xlim(left=0)
@@ -136,9 +128,8 @@ if wholeFieldOn:
                 plt.pause(0.1)
             plt.close()
 
-            # ---------------------------
             # MSE Plot
-            # ---------------------------
+
             plt.figure(figsize=(10, 6))
             plt.plot(data["T"], data["MSE_u"], label="MSE_u", marker='o')
             plt.plot(data["T"], data["MSE_v"], label="MSE_v", marker='s')
@@ -173,8 +164,7 @@ if wholeFieldOn:
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
-# MEASUREMENT POINTS ERROR TRACKING
+# MEASUREMENT POINTS SPREAD TRACKING
 
 if probePlotOn:
     if printProgress: print("Starting probe plots")
@@ -261,12 +251,12 @@ if probePlotOn:
     members = sorted([k for k in data.keys() if "member" in k], key=lambda m: int(m.replace("member", "")))
     num_members = len(members)
 
-    # Use the time array from the first member (assuming identical simulation times).
+    # Use the time array from the first member, assumes each member runs for the same time
     time = data[members[0]]["time"]
     num_timesteps = len(time)
     num_probe_points = data[members[0]]["u"].shape[1]
 
-    # Stack the data from each member into 3D arrays.
+    # Stack the data from each member into 3D arrays
     u_ensemble = np.empty((num_members, num_timesteps, num_probe_points))
     v_ensemble = np.empty((num_members, num_timesteps, num_probe_points))
 
@@ -274,17 +264,16 @@ if probePlotOn:
         u_ensemble[i, :, :] = data[mem]["u"]
         v_ensemble[i, :, :] = data[mem]["v"]
 
-    # Now, if timeWindow is set, filter the ensemble data and time arrays.
+    # If timeWindow is set, window the ensemble data and time arrays
     if timeWindow and len(timeWindow) == 2:
         t_min, t_max = timeWindow
         mask = (time >= t_min) & (time <= t_max)
 
-        # Filter ensemble times and velocities
         time = time[mask]
         u_ensemble = u_ensemble[:, mask, :]
         v_ensemble = v_ensemble[:, mask, :]
 
-    # Compute the ensemble mean, max, and min across members (axis 0).
+    # Compute the ensemble mean, max, and min across members for each point in space and time
     u_mean = np.mean(u_ensemble, axis=0)
     u_max = np.max(u_ensemble, axis=0)
     u_min = np.min(u_ensemble, axis=0)
@@ -300,17 +289,17 @@ if probePlotOn:
     u_ref = data["refSoln"]["u"]
     v_ref = data["refSoln"]["v"]
 
-    # If you want to *also* filter reference solution data by the same timeWindow:
+    # Window the reference solution too, as above
     if timeWindow and len(timeWindow) == 2 and len(time_ref) > 0:
         ref_mask = (time_ref >= t_min) & (time_ref <= t_max)
         time_ref = time_ref[ref_mask]
         u_ref = u_ref[ref_mask, :]
         v_ref = v_ref[ref_mask, :]
 
-    # Get the positions of the probe points for clearer analysis
+    # Get the positions of the probe points to output with plots
     probe_coords = pd.read_csv(probe_coords_file, skiprows=1, header=None).values
 
-    # --- Plotting the results ---
+    # Plot results
     if printProgress: print("Starting plotting")
 
     for p in probeNum:
@@ -331,12 +320,12 @@ if probePlotOn:
         plt.grid(True)
         plt.legend(loc="best")
 
-        if plotAssimInt:
-            # Use MultipleLocator for vertical lines every 0.1 time units
-            ax = plt.gca()  # Get current axes
+        if plotAssimInt:        # Display the update times, if toggled
+            ax = plt.gca() 
             ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
             ax.grid(which='major', axis='x', linestyle='--', color='black')    
 
+        # Save plot
         plt.tight_layout()
         if not timeWindow: plt.savefig(output_path+f"U_probe_series_point{p}.png", dpi=300)
         else: plt.savefig(output_path+f"U_probe_series_point{p}_windowed_{t_min}_{t_max}.png", dpi=300)
@@ -361,12 +350,12 @@ if probePlotOn:
         plt.grid(True)
         plt.legend(loc="best")
 
-        if plotAssimInt:
-            # Use MultipleLocator for vertical lines every 0.1 time units
-            ax = plt.gca()  # Get current axes
+        if plotAssimInt:        # Display the update times, if toggled
+            ax = plt.gca()
             ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
             ax.grid(which='major', axis='x', linestyle='--', color='black')    
 
+        # Save plot
         plt.tight_layout()
         if not timeWindow: plt.savefig(output_path+f"V_probe_series_point{p}.png", dpi=300)
         else: plt.savefig(output_path+f"V_probe_series_point{p}_windowed_{t_min}_{t_max}.png", dpi=300)
@@ -381,16 +370,17 @@ if probePlotOn:
 
 # SPREAD TRACKING AND QUANTIFICATION
 
+# Helper function for fitting chaos predicted exponential divergence per update interval
 def exponential_window_fit(x, y, assimInt, num_points=100, skip_first=False, fixed_lambda=None):
     """
-    Perform exponential fits on windows of data that reset every 'assimInt'.
+    Perform exponential fits on windows of data between each update
 
     The model is:
         y(t) = A * exp(lambda * t)
-    which is linearized as:
+    which transformed to log space for linear regression as:
         ln(y) = ln(A) + lambda * t
 
-    If fixed_lambda is provided (not None), then lambda is set to that value and only A is estimated.
+    If fixed_lambda is provided (not None), then lambda is set to that value and only A is estimated
     
     Parameters:
         x : array-like
@@ -426,7 +416,7 @@ def exponential_window_fit(x, y, assimInt, num_points=100, skip_first=False, fix
     
     for start in window_starts:
 
-        # Select data in the current window: [start, start+assimInt)
+        # Select data in the current window: [start, start+assimInt]
         mask = (x >= start) & (x < start + assimInt)
         x_window = x[mask]
         y_window = y[mask]
@@ -480,6 +470,7 @@ def exponential_window_fit(x, y, assimInt, num_points=100, skip_first=False, fix
     
     return fit_results
 
+# Helper function to attempt to fit an exponential decay of divergence magnitude (not a good assumption, it turns out)
 def collapse_rate_regression(fit_results):
     """
     Given a list of fit results from a windowed exponential fit,
@@ -530,22 +521,21 @@ def collapse_rate_regression(fit_results):
     
     return B, mu, reg, t_values, y_values
 
+# Helper function to find the domain variance
 if plotAvgVar:
     if printProgress: print("Starting spread analysis")
-    # --- Compute and plot the average variance for u and v separately ---
+    # Compute and plot the average variance for u and v separately
 
-    # 1) Compute per-timestep variance over the ensemble (axis 0) for each probe point.
-    #    u_var and v_var have shape (num_timesteps, num_probe_points)
+    # Compute per-timestep variance over the ensemble for each probe point
     u_var = np.var(u_ensemble, axis=0)
     v_var = np.var(v_ensemble, axis=0)
 
-    # 2) Average the variance over all probe points for each timestep.
-    #    This results in one average variance value per timestep for u and v.
+    # Average the variance over all probe points for each timestep (vector time series now)
     average_u_variance = np.mean(u_var, axis=1)
     average_v_variance = np.mean(v_var, axis=1)
     combined_average_variance = (average_u_variance + average_v_variance) / 2
 
-    # 3) Plot the average variances for u and v on the same figure for comparison.
+    # Plot the average variances for u and v on the same figure for comparison.
     plt.figure(figsize=(10, 5))
     plt.plot(time, average_u_variance, label='Average u Variance', color='C0')
     plt.plot(time, average_v_variance, label='Average v Variance', color='C1')
@@ -556,14 +546,14 @@ if plotAvgVar:
     plt.grid(True)
     plt.legend(loc="best")
 
-    if plotAssimInt:
-        # Use MultipleLocator for vertical lines every few time units
-        ax = plt.gca()  # Get current axes
+    if plotAssimInt:        # Display the update times, if toggled
+        ax = plt.gca()
         ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
         ax.grid(which='major', axis='x', linestyle='--', color='black')  
 
     plt.tight_layout()
 
+    # Save plot
     if not timeWindow: output_plot_path_avgvar = output_path + "average_variance.png"
     else: output_plot_path_avgvar = output_path+f"average_variance_windowed_{t_min}_{t_max}.png"
 
@@ -574,35 +564,33 @@ if plotAvgVar:
         plt.pause(0.1)
     plt.close()
 
-
     # Fit exponential curves to the data, as Lyapunov predicts, to allow for tracking of the collapse rate
 
-    # Get the fits:
+    # Get the fits from the above helper function
     fits = exponential_window_fit(time, combined_average_variance, assimInt, skip_first=True, fixed_lambda=0.2)
 
+    # Attempt to quantify an exponential decay rate over the full sim at the end of each interval
     B_est, mu_est, reg, t_vals, y_vals = collapse_rate_regression(fits)
 
-    # Plot data and fits:
+    # Plot data and fits
     plt.figure(figsize=(10, 6))
     plt.plot(time, combined_average_variance, 'o', label='Data', markersize=3)
     for fit in fits:
-        plt.plot(fit['x_fit'], fit['y_fit'], '--')#, 
-                 #label=f"Fit {fit['window_start']:.0f}-{fit['window_end']:.0f} (λ={fit['lambda_fit']:.3f})")
+        plt.plot(fit['x_fit'], fit['y_fit'], '--')
     
     # Create a smooth curve for the collapse rate regression: B*exp(-mu*t)
     t_reg = np.linspace(0, t_vals.max(), 200)
     y_reg = B_est * np.exp(-mu_est * t_reg)
     plt.plot(t_reg, y_reg, 'k-', linewidth=2, label=f"Collapse Fit (μ={mu_est:.3f})")
-    # Highlight the pivot points (end-of-window values) used in the collapse regression
+    # Highlight the pivot points (values at the end of each interval) used in the collapse regression
     plt.plot(t_vals, y_vals, 'ro', markersize=6, label="Pivot Points")
 
     plt.xlabel("Time")
     plt.ylabel("Variance")
     plt.title("Exponential Fits per Assimilation Window")
     plt.legend(loc="best", fontsize='small')
-    if plotAssimInt:
-        # Use MultipleLocator for vertical lines every few time units
-        ax = plt.gca()  # Get current axes
+    if plotAssimInt:        # Display the update times, if toggled
+        ax = plt.gca()
         ax.xaxis.set_major_locator(ticker.MultipleLocator(assimInt))
         ax.grid(which='major', axis='x', linestyle='--', color='black')  
     plt.grid(True)
