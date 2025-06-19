@@ -1,6 +1,5 @@
-MainImplementation/referenceSolutions/
-MainImplementation/manualEnKF/memberRunFiles/
-MainImplementation/manualEnKF/outputs/
-MainImplementation/manualEnKF/EnKFMeshData/
+MainImplementation/memberRunFiles/
+MainImplementation/outputs/
+MainImplementation/EnKFMeshData/
 OtherCases/
 
