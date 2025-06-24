@@ -57,5 +57,5 @@ That being said, much of the structure and logic contained here should be applic
 
 Notes
 ---
-This code should be used with multiple caveats. It was designed to work on the uniiversity linux machines, which have tight restrictions on the installation of packages, hence the required python packages were downloaded from their respective repos and included manually in pythonScripts/.
+This code should be used with multiple caveats. It was designed to work on the university linux machines, which have tight restrictions on the installation of packages, hence the required python packages were downloaded from their respective repos and included manually in pythonScripts/.
 This code is also far from perfect, and was designed (by an engineer) to perform the required task with satisfactory efficiency and is far from fully optimised.
